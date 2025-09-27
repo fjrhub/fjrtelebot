@@ -26,8 +26,7 @@ const getWIBTime = () => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
-  }).format(new Date()).replace(/\//g, '-').replace(',', '');
+  }).format(new Date()).replace(/\//g, '/').replace(',', '');
 };
 
 module.exports = {
