@@ -44,8 +44,8 @@ module.exports = {
         return bot.sendMessage(chatId, 'No balance data found.');
       }
 
-      const message = `🧾 Wallet: ${data.name}
-💰 Balance: Rp${data.total.toLocaleString('id-ID')}
+      const message = `🧾 Wallet: ${data.wallet}
+💰 Balance: Rp${data.amount.toLocaleString('id-ID')}
 📅 Last updated: ${getWIBTime()}`;
 
       return bot.sendMessage(chatId, message);
@@ -56,11 +56,11 @@ module.exports = {
       return bot.sendMessage(chatId, 'No balance data found.');
     }
 
-    const totalBalance = data.reduce((sum, item) => sum + item.total, 0);
+    const totalBalance = data.reduce((sum, item) => sum + item.amount, 0);
 
     let message = `📊 *Wallet Balances*\n\n`;
     data.forEach((item, index) => {
-      message += `🧾 Wallet ${index + 1}: ${item.name}\n💰 Balance: Rp${item.total.toLocaleString('id-ID')}\n\n`;
+      message += `🧾 Wallet ${index + 1}: ${item.wallet}\n💰 Balance: Rp${item.amount.toLocaleString('id-ID')}\n\n`;
     });
     message += `🔢 *Total Balance:* Rp${totalBalance.toLocaleString('id-ID')}\n`;
     message += `📅 Last updated: ${getWIBTime()}`;
