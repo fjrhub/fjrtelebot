@@ -3,7 +3,7 @@ const path = require("path");
 
 const commands = new Map();
 
-// Load semua file di folder command/
+// Load all command modules
 const commandFiles = fs.readdirSync(path.join(__dirname, "command")).filter(file => file.endsWith(".js"));
 
 for (const file of commandFiles) {
@@ -23,11 +23,28 @@ function handleCommand(bot, msg) {
 
   try {
     command.execute(bot, msg, args);
-  } catch (error) {
-    console.error(`Gagal menjalankan command ${commandName}`, error);
-    bot.sendMessage(msg.chat.id, "Terjadi kesalahan saat menjalankan command.");
+  } catch (err) {
+    console.error(`Error in command "${commandName}"`, err);
+    bot.sendMessage(msg.chat.id, "An error occurred while executing the command.");
   }
 }
 
-module.exports = { handleCommand };
+function handleCallback(bot, query) {
+  const data = query.data;
+  const [commandPrefix] = data.split(":");
 
+  const command = commands.get(commandPrefix);
+  if (!command || !command.handleCallback) {
+    // Answer anyway to avoid infinite loading
+    return bot.answerCallbackQuery(query.id, { text: "Invalid or unknown action." });
+  }
+
+  try {
+    command.handleCallback(bot, query);
+  } catch (err) {
+    console.error(`Error in callback "${data}"`, err);
+    bot.answerCallbackQuery(query.id, { text: "Something went wrong." });
+  }
+}
+
+module.exports = { handleCommand, handleCallback };
