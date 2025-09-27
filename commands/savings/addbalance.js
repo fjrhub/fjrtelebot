@@ -14,12 +14,12 @@ module.exports = {
     }
 
     const wallet = args[0].toUpperCase();
-    const rawAmount = args[1].replace(/\./g, ""); // Remove dots if user inputs 10.000
+    const rawAmount = parseFloat(args[1].replace(/\./g, '').replace(/,/g, ''));
     const amount = parseInt(rawAmount);
     const information = args.slice(2).join(" ");
 
     if (!wallet || isNaN(amount) || !information) {
-      return bot.sendMessage(chatId, "Invalid format. Example:\n/addbalance DANA 150000 Monthly savings");
+      return bot.sendMessage(chatId, "Invalid format. Example:\n/addbalance DANA 150.000 Monthly savings");
     }
 
     const { error } = await insertBalance(amount, information, wallet);
