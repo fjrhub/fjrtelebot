@@ -1,2 +1,0 @@
-# fajrultelebot
-simple telegram bot
