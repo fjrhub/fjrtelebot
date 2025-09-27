@@ -1,5 +1,5 @@
 const { getWIBTime, privat } = require("../utils/helper");
-const { supabase } = require("../utils/supabase");
+const { getAllBalances, getSingleBalance } = require("../utils/supabase");
 
 module.exports = {
   name: "balance",
@@ -7,30 +7,17 @@ module.exports = {
   async execute(bot, msg, args) {
     const chatId = msg.chat.id;
 
-    // Restrict access to private users only
     if (!privat(chatId)) return;
-
-    // Valid args: no argument OR '-a'
-    if (args.length > 0 && args[0] !== "-a") {
-      // Invalid argument: ignore and do nothing
-      return;
-    }
+    if (args.length > 0 && args[0] !== "-a") return;
 
     const showAll = args[0] === "-a";
+
     let data, error;
 
     if (showAll) {
-      // Load all balance records
-      ({ data, error } = await supabase
-        .from('saldo')
-        .select('*'));
+      ({ data, error } = await getAllBalances());
     } else {
-      // Load only the first balance record
-      ({ data, error } = await supabase
-        .from('saldo')
-        .select('*')
-        .limit(1)
-        .single());
+      ({ data, error } = await getSingleBalance());
     }
 
     if (error) {
@@ -38,11 +25,8 @@ module.exports = {
       return bot.sendMessage(chatId, 'Failed to check balance.');
     }
 
-    // If only one record (not array)
     if (!showAll) {
-      if (!data) {
-        return bot.sendMessage(chatId, 'No balance data found.');
-      }
+      if (!data) return bot.sendMessage(chatId, 'No balance data found.');
 
       const message = `🧾 Wallet: ${data.wallet}
 💰 Balance: Rp${data.amount.toLocaleString('id-ID')}
@@ -51,7 +35,6 @@ module.exports = {
       return bot.sendMessage(chatId, message);
     }
 
-    // If multiple records
     if (!data || data.length === 0) {
       return bot.sendMessage(chatId, 'No balance data found.');
     }
