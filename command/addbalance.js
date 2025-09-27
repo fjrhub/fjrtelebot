@@ -10,32 +10,40 @@ module.exports = {
     if (!privat(chatId)) return;
 
     if (args.length < 3) {
-      return bot.sendMessage(chatId, "Usage: /addbalance <name> <amount> <information>");
+      return bot.sendMessage(chatId, "Usage: /addbalance <wallet> <amount> <information>");
     }
 
-    const wallet = args[0];
-    const amount = parseInt(args[1]);
+    const wallet = args[0].toUpperCase();
+    const rawAmount = args[1].replace(/\./g, ""); // Remove dots if user inputs 10.000
+    const amount = parseInt(rawAmount);
     const information = args.slice(2).join(" ");
 
     if (!wallet || isNaN(amount) || !information) {
-      return bot.sendMessage(chatId, "Invalid format. Example:\n/addbalance Dana 150000 Monthly savings");
+      return bot.sendMessage(chatId, "Invalid format. Example:\n/addbalance DANA 150000 Monthly savings");
     }
 
     const { error } = await insertBalance(amount, information, wallet);
 
     if (error) {
-      // Tangani khusus jika wallet tidak ditemukan
+      // Wallet not found in saldo
       if (error.code === 'PGRST116') {
-        return bot.sendMessage(chatId, `❌ Wallet *${wallet}* tidak ditemukan di saldo.\nSilakan tambahkan wallet terlebih dahulu.`, { parse_mode: "Markdown" });
+        return bot.sendMessage(chatId, `❌ Wallet *${wallet}* not found in balance.\nPlease add the wallet first.`, {
+          parse_mode: "Markdown",
+        });
       }
 
-      // Jika error lain
-      return bot.sendMessage(chatId, "❌ Gagal menambahkan balance. Silakan coba lagi nanti.");
+      // Other errors
+      return bot.sendMessage(chatId, "❌ Failed to add balance. Please try again later.");
     }
 
-    bot.sendMessage(chatId, `✅ Balance berhasil ditambahkan:
+    const formattedAmount = amount.toLocaleString("id-ID");
+
+    bot.sendMessage(
+      chatId,
+      `✅ Balance has been added successfully:
 📛 Wallet: ${wallet}
-💰 Amount: Rp${amount.toLocaleString("id-ID")}
-📝 Info: ${information}`);
-  }
+💰 Amount: Rp${formattedAmount}
+📝 Information: ${information}`
+    );
+  },
 };
