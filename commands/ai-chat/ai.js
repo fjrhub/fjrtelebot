@@ -47,7 +47,7 @@ _Your chat history is saved per user._`,
         .join("\n\n")
         .slice(-4096);
 
-      return bot.sendMessage(chatId, formatted);
+      return bot.sendMessage(chatId, formatted, { parse_mode: "Markdown" });
     }
 
     if (input.toLowerCase() === "new") {
@@ -64,7 +64,7 @@ _Your chat history is saved per user._`,
           await bot.sendMessage(chatId, response.slice(i, i + 4096));
         }
       } else {
-        bot.sendMessage(chatId, response);
+        bot.sendMessage(chatId, response, { parse_mode: "Markdown" });
       }
     } catch (err) {
       console.error("AI Error:", err);
