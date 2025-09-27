@@ -3,6 +3,7 @@ const {
   getChatHistory,
   resetChat,
 } = require("../../utils/groq");
+const { privat } = require("../../utils/helper");
 
 module.exports = {
   name: "ai",
@@ -10,6 +11,7 @@ module.exports = {
     "Chat with AI using Groq (supports memory, /ai history & /ai new)",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
+    if (!privat(chatId)) return;
     const text = msg.text?.trim();
 
     if (!text || text === "/ai") {
@@ -66,7 +68,10 @@ _Your chat history is saved per user._`,
       }
     } catch (err) {
       console.error("AI Error:", err);
-      bot.sendMessage(chatId, "An error occurred while processing the request.");
+      bot.sendMessage(
+        chatId,
+        "An error occurred while processing the request."
+      );
     }
   },
 };
