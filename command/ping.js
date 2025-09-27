@@ -1,9 +1,9 @@
-const { isAuthorized, privat } = require("../utils/helper");
+const { privat } = require("../utils/helper");
 
 module.exports = {
   name: "ping",
   description: "Test Connection",
-  execute(bot, msg, args) {
+  execute(bot, msg) {
     const chatId = msg.chat.id;
 
     // Check if the chat is private or allowed
