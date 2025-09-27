@@ -28,9 +28,9 @@ async function insertBalance(amount, information, wallet) {
   return { error: updateError };
 }
 
-// Get all balance dataGet all balance data
+// Get all balance data ordered by ID (ascending)
 async function getAllBalances() {
-  return await supabase.from('saldo').select('*');
+  return await supabase.from('saldo').select('*').order('id', { ascending: true });
 }
 
 // Take one balance data (first)
@@ -91,11 +91,76 @@ async function getTransactions({ wallet, month, page = 1, limit = 15 }) {
   return { data, error };
 }
 
+async function updateTransactionAndBalance(id, newAmount, newInfo) {
+  // Get old transaction
+  const { data: oldTx, error: getErr } = await supabase
+    .from("transaksi")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (getErr || !oldTx) {
+    return { error: `Transaction ID ${id} not found.` };
+  }
+
+  const oldAmount = oldTx.amount;
+  const wallet = oldTx.wallet.toUpperCase();
+  const diff = newAmount - oldAmount;
+
+  // Update the transaction
+  const { error: updateTxError } = await supabase
+    .from("transaksi")
+    .update({
+      amount: newAmount,
+      information: newInfo,
+      date: new Date().toISOString()
+    })
+    .eq("id", id);
+
+  if (updateTxError) {
+    return { error: `Failed to update transaction: ${updateTxError.message}` };
+  }
+
+  // Get current balance
+  const { data: currentBalance, error: saldoErr } = await supabase
+    .from("saldo")
+    .select("amount")
+    .eq("wallet", wallet)
+    .single();
+
+  if (saldoErr || !currentBalance) {
+    return { error: `Failed to fetch balance: ${saldoErr.message}` };
+  }
+
+  const newBalance = currentBalance.amount + diff;
+
+  // Update the balance
+  const { error: updateSaldoErr } = await supabase
+    .from("saldo")
+    .update({ amount: newBalance })
+    .eq("wallet", wallet);
+
+  if (updateSaldoErr) {
+    return { error: `Failed to update balance: ${updateSaldoErr.message}` };
+  }
+
+  return {
+    success: true,
+    oldAmount,
+    newAmount,
+    newBalance,
+    wallet,
+    newInfo
+  };
+}
+
+
 
 module.exports = {
   supabase,
   insertBalance,
   getAllBalances,
   getSingleBalance,
-  getTransactions
+  getTransactions,
+  updateTransactionAndBalance
 };
