@@ -1,17 +1,17 @@
 # fjrtelebot
 
-Bot Telegram berbasis Node.js dengan fitur multi-fungsi: AI Chat, downloader, pengelolaan saldo, auto-reply, serta berbagai utilitas.
+A Node.js-based Telegram bot with multifunctional features including AI chat, media downloader, balance management, auto-reply, and various utilities.
 
-## 🚀 Fitur Utama
+## 🚀 Main Features
 
-- 🤖 **AI Chat** — Respon otomatis berbasis AI (OpenAI atau Groq).
-- ⬇️ **Downloader** — Unduh media dari berbagai sumber.
-- 🕹️ **Entertainment** — Perintah hiburan seperti waifu.
-- 💰 **Savings** — Tambah, lihat, dan edit saldo pengguna.
-- 🔍 **Search** — Fungsi pencarian seperti DuckDuckGo.
-- 🛠️ **Tools** — Perintah ping, jadwal sholat, screenshot, dsb.
+- 🤖 **AI Chat** — AI-powered responses (via OpenAI or Groq).
+- ⬇️ **Downloader** — Download media from multiple sources.
+- 🕹️ **Entertainment** — Fun commands like `/waifu`.
+- 💰 **Savings** — Add, view, and edit user balance.
+- 🔍 **Search** — Search features like DuckDuckGo queries.
+- 🛠️ **Tools** — Utilities like ping, prayer times, screenshots, etc.
 
-## 📁 Struktur Direktori
+## 📁 Directory Structure
 
 ```
 fjrtelebot/
@@ -34,37 +34,37 @@ fjrtelebot/
 └── autopdate.sh
 ```
 
-## ⚙️ Instalasi
+## ⚙️ Installation
 
-### 1. Clone Repo
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/fajrulcore/fjrtelebot.git
 cd fjrtelebot
 ```
 
-### 2. Install Dependensi
+### 2. Install Dependencies
 ```bash
 pnpm install
-# atau: npm install / yarn install
+# or: npm install / yarn install
 ```
 
-### 3. Salin dan edit `.env`
+### 3. Copy and Configure `.env`
 ```bash
 cp .env.example .env
 nano .env
 ```
 
-### 4. Jalankan Bot
+### 4. Start the Bot
 ```bash
 pnpm start
-# atau: node index.js
+# or: node index.js
 ```
 
-## 🧩 Konfigurasi `.env`
+## 🧩 `.env` Configuration
 
-Isi variabel di `.env` sesuai token dan endpoint API kamu.
+Fill in the variables in your `.env` file with your bot token and API keys.
 
-Contoh:
+Example:
 ```
 BOT_TOKEN=xxxxxxxx
 GROQ_API_KEY=xxxxxxxx
@@ -72,19 +72,19 @@ SUPABASE_URL=...
 SUPABASE_KEY=...
 ```
 
-## 💡 Contoh Perintah Bot
+## 💡 Bot Command Examples
 
-| Perintah         | Fungsi                              |
+| Command           | Function                            |
 |------------------|-------------------------------------|
-| `/ai <prompt>`   | AI Chat                            |
-| `/auto_on`        | Mengaktifkan auto-reply            |
-| `/waifu`          | Mengirim gambar waifu random       |
-| `/sholat`         | Menampilkan jadwal sholat          |
-| `/balance`        | Menampilkan saldo pengguna         |
-| `/addbalance`     | Menambah saldo pengguna            |
-| `/duck <query>`   | Mencari informasi via DuckDuckGo   |
+| `/ai <prompt>`   | Ask anything to AI                  |
+| `/auto_on`        | Enable auto-reply mode              |
+| `/waifu`          | Send a random waifu image           |
+| `/sholat`         | Show prayer times                   |
+| `/balance`        | Display user balance                |
+| `/addbalance`     | Add balance to a user               |
+| `/duck <query>`   | Search info using DuckDuckGo        |
 
-## ✅ Dependensi Utama
+## ✅ Main Dependencies
 
 - `node-telegram-bot-api`
 - `axios`
@@ -93,7 +93,7 @@ SUPABASE_KEY=...
 - `groq`
 - `supabase`
 
-## 🤝 Kontribusi
+## 🤝 Contributing
 
-Pull request sangat diterima!  
-Pastikan struktur folder tetap modular dan gunakan format standar.
+Pull requests are welcome!  
+Please keep the folder structure modular and follow standard formatting.
