@@ -4,7 +4,7 @@ require("dotenv").config();
 
 module.exports = {
   name: "tt",
-  description: "tiktok downloader",
+  description: "TikTok downloader",
   async execute(bot, msg, args) {
     const chatId = msg.chat.id;
     if (!privat(chatId)) return;
@@ -48,7 +48,7 @@ Downloads: ${format(data.download_count)}`;
         return;
       }
 
-      throw new Error("API 1 tidak mengandung konten valid.");
+      throw new Error("API 1 returned no valid downloadable content.");
     };
 
     const handlerApi2 = async (data) => {
@@ -80,11 +80,10 @@ Downloads: ${format(data.metadata?.download)}`;
         return;
       }
 
-      throw new Error("API 2 tidak mengandung konten valid.");
+      throw new Error("API 2 returned no valid downloadable content.");
     };
 
     const handlerApi3 = async (data) => {
-      console.log(data)
       const statsOnly = `Views: ${data.stats?.views || "?"}
 Comments: ${data.stats?.comment || "?"}
 Shares: ${data.stats?.share || "?"}
@@ -92,7 +91,7 @@ Downloads: ${data.stats?.download || "?"}`;
       const caption = `${data.durations > 0 ? `Duration: ${data.durations}s\n` : ""}${statsOnly}`;
 
       const photos = data.data?.filter((item) => item.type === "photo");
-      const videos = data.data?.find((item) => item.type === "nowatermark");
+      const video = data.data?.find((item) => item.type === "nowatermark");
 
       if (photos?.length > 0) {
         const chunks = chunkArray(photos.map(p => p.url), 10);
@@ -107,8 +106,8 @@ Downloads: ${data.stats?.download || "?"}`;
         return;
       }
 
-      if (videos?.url && data.durations > 0) {
-        await bot.sendVideo(chatId, videos.url, {
+      if (video?.url && data.durations > 0) {
+        await bot.sendVideo(chatId, video.url, {
           caption,
           parse_mode: "Markdown",
           supports_streaming: true,
@@ -116,31 +115,31 @@ Downloads: ${data.stats?.download || "?"}`;
         return;
       }
 
-      throw new Error("API 3 tidak mengandung konten valid.");
+      throw new Error("API 3 returned no valid downloadable content.");
     };
 
     try {
-      const res1 = await axios.get(`${process.env.agatz}/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
+      const res1 = await axios.get(`${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
       const data1 = res1.data?.result?.data;
-      if (!res1.data?.status || !data1) throw new Error("API 1 tidak valid");
+      if (!res1.data?.status || !data1) throw new Error("API 1 returned an invalid response.");
       await handlerApi1(data1);
     } catch (e1) {
-      console.warn("⚠️ API 1 gagal:", e1.message);
+      console.warn("⚠️ API 1 failed:", e1.message);
       try {
-        const res2 = await axios.get(`${process.env.agatz}/api/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
+        const res2 = await axios.get(`${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
         const result = res2.data?.result;
-        if (!res2.data?.status || !result?.media) throw new Error("API 2 tidak valid");
+        if (!res2.data?.status || !result?.media) throw new Error("API 2 returned an invalid response.");
         await handlerApi2(result);
       } catch (e2) {
-        console.warn("⚠️ API 2 gagal:", e2.message);
+        console.warn("⚠️ API 2 failed:", e2.message);
         try {
           const res3 = await axios.get(`${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
           const result = res3.data?.result;
-          if (!res3.data?.status || !result) throw new Error("API 3 tidak valid");
+          if (!res3.data?.status || !result) throw new Error("API 3 returned an invalid response.");
           await handlerApi3(result);
         } catch (e3) {
-          console.error("❌ Semua API gagal:", e3.message);
-          bot.sendMessage(chatId, "❌ Semua API gagal.");
+          console.error("❌ All APIs failed:", e3.message);
+          bot.sendMessage(chatId, "❌ All TikTok download APIs failed.");
         }
       }
     }
