@@ -3,13 +3,12 @@ const axios = require("axios");
 
 module.exports = {
   name: "ss",
-  description: "Take website screenshot using Vreden API (with fallback)",
+  description: "Take website screenshot using Vreden API (with fallback to FAST)",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
 
     const input = msg.text?.split(" ").slice(1).join(" ").trim();
-
     if (!input) {
       return bot.sendMessage(
         chatId,
@@ -43,33 +42,35 @@ module.exports = {
       await bot.sendPhoto(chatId, buffer);
     };
 
+    const screenshotVreden = async (url) => {
+      const apiUrl = `${process.env.vreden}/api/ssweb?url=${encodeURIComponent(url)}&type=tablet`;
+      const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
+      if (!res.data) throw new Error("API 1 returned empty data.");
+      return res.data;
+    };
+
+    const screenshotFast = async (url) => {
+      const apiUrl = `${process.env.FAST}/tool/screenshot?url=${encodeURIComponent(url)}&width=1280&height=800&delay=0&fullPage=false&darkMode=false&type=png`;
+      const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
+      if (!res.data) throw new Error("API 2 returned empty data.");
+      return res.data;
+    };
+
     try {
-      // API 1 → Vreden
       await sendOrEditStatus("📡 Trying API 1 (Vreden)...");
-      const apiUrl1 = `${process.env.a}/api/ssweb?url=${encodeURIComponent(input)}&type=tablet`;
-
-      const res1 = await axios.get(apiUrl1, { responseType: "arraybuffer", timeout: 10000 });
-      if (!res1.data) throw new Error("API 1 returned empty data.");
-
-      await handleScreenshot(res1.data);
+      const buffer1 = await screenshotVreden(input);
+      await handleScreenshot(buffer1);
       await deleteStatus();
       console.log("✅ Primary API (Vreden) success");
-
     } catch (err1) {
       console.error("❌ API 1 failed:", err1.message);
 
       try {
-        // API 2 → FAST
         await sendOrEditStatus("📡 Trying API 2 (FAST)...");
-        const apiUrl2 = `${process.env.FAST}/tool/screenshot?url=${encodeURIComponent(input)}&width=1280&height=800&delay=0&fullPage=false&darkMode=false&type=png`;
-
-        const res2 = await axios.get(apiUrl2, { responseType: "arraybuffer", timeout: 10000 });
-        if (!res2.data) throw new Error("API 2 returned empty data.");
-
-        await handleScreenshot(res2.data);
+        const buffer2 = await screenshotFast(input);
+        await handleScreenshot(buffer2);
         await deleteStatus();
         console.log("✅ Fallback API (FAST) success");
-
       } catch (err2) {
         console.error("❌ API 2 failed:", err2.message);
         await sendOrEditStatus("❌ Failed to take screenshot from both APIs.");
