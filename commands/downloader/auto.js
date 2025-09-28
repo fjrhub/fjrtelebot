@@ -67,33 +67,49 @@ module.exports = {
 
     const tthandler1 = async (data) => {
       if (typeof data === "object" && data !== null && data.result) {
-        const hdPlayUrl =
-          data.result.hdplay || data.result.play || data.result.wmplay;
-        const sizeInBytes = data.result.hd_size || 0;
         const playCount = data.result.play_count || 0;
         const commentCount = data.result.comment_count || 0;
         const shareCount = data.result.share_count || 0;
         const downloadCount = data.result.download_count || 0;
 
-        const sizeFormatted = formatSize(sizeInBytes);
-
+        // Create caption for media
         const caption = `
 Play Count: ${playCount}
 Comment Count: ${commentCount}
 Share Count: ${shareCount}
 Download Count: ${downloadCount}
-Size: ${sizeFormatted}
     `.trim();
 
-        if (
-          !hdPlayUrl ||
-          typeof hdPlayUrl !== "string" ||
-          !hdPlayUrl.startsWith("http")
-        ) {
-          throw new Error("Invalid HD play URL from API: " + hdPlayUrl);
-        }
+        const images = data.result.images || [];
 
-        await bot.sendVideo(chatId, hdPlayUrl, { caption });
+        if (images.length > 0) {
+          // Prepare media group for sending images with caption on the first image
+          const mediaGroup = images.map((url, idx) => ({
+            type: "photo",
+            media: url,
+            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
+          }));
+
+          // Send media group with caption on the first image
+          await bot.sendMediaGroup(chatId, mediaGroup);
+        } else {
+          // Handle video logic if no images are present
+          const hdPlayUrl =
+            data.result.hdplay || data.result.play || data.result.wmplay;
+          if (
+            !hdPlayUrl ||
+            typeof hdPlayUrl !== "string" ||
+            !hdPlayUrl.startsWith("http")
+          ) {
+            throw new Error("Invalid HD play URL from API: " + hdPlayUrl);
+          }
+
+          const sizeInBytes = data.result.hd_size || 0;
+          const sizeFormatted = formatSize(sizeInBytes);
+          const videoCaption = `${caption}\nSize: ${sizeFormatted}`;
+
+          await bot.sendVideo(chatId, hdPlayUrl, { caption: videoCaption });
+        }
       } else {
         throw new Error("Invalid data format: missing expected properties.");
       }
