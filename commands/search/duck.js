@@ -1,4 +1,4 @@
-const { privat } = require('@/utils/helper');
+const { isAuthorized } = require('@/utils/helper');
 const axios = require("axios");
 require("dotenv").config();
 
@@ -8,7 +8,7 @@ module.exports = {
   async execute(bot, msg, args) {
     const chatId = msg.chat.id;
     const input = args.slice(0).join(" ");
-    if (!privat(chatId)) return;
+    if (!isAuthorized(chatId)) return;
     if (input) {
       try {
         const apiUrl =

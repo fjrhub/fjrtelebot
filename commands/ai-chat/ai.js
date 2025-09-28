@@ -1,5 +1,5 @@
 const { sendMessageToGroq, getChatHistory, resetChat, } = require("@/utils/groq");
-const { privat } = require("@/utils/helper");
+const { isAuthorized } = require("@/utils/helper");
 
 module.exports = {
   name: "ai",
@@ -7,7 +7,7 @@ module.exports = {
     "Chat with AI using Groq (supports memory, /ai history & /ai new)",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
-    if (!privat(chatId)) return;
+    if (!isAuthorized(chatId)) return;
     const text = msg.text?.trim();
 
     if (!text || text === "/ai") {
