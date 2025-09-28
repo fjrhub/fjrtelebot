@@ -1,5 +1,5 @@
 const { sendMessageToGroq, getChatHistory, resetChat, } = require("@/utils/groq");
-const { isAuthorized } = require("@/utils/helper");
+const { isAuthorized, privat } = require("@/utils/helper");
 
 module.exports = {
   name: "ai",
@@ -7,7 +7,11 @@ module.exports = {
     "Chat with AI using Groq (supports memory, /ai history & /ai new)",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
+
     if (!isAuthorized(chatId)) return;
+
+    const modelId = privat(chatId) ? 1 : 2; // kamu bisa balik tergantung kebutuhan
+
     const text = msg.text?.trim();
 
     if (!text || text === "/ai") {
@@ -52,7 +56,7 @@ _Your chat history is saved per user._`,
     }
 
     try {
-      const response = await sendMessageToGroq(chatId, input);
+      const response = await sendMessageToGroq(chatId, input, modelId);
       if (!response) return bot.sendMessage(chatId, "Empty reply.");
 
       if (response.length > 4096) {
