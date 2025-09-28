@@ -205,6 +205,38 @@ Downloads: ${data.stats?.download || "?"}`;
       await bot.sendVideo(chatId, videoUrl);
     };
 
+    const igHandler1 = async (data) => {
+      const mediaList = data.data || [];
+      if (!Array.isArray(mediaList) || mediaList.length === 0)
+        throw new Error("No media found in IG API 1.");
+
+      const video = mediaList.find((item) => item.type === "video");
+      if (video?.url) {
+        await bot.sendVideo(chatId, video.url, {
+          supports_streaming: true,
+        });
+        return;
+      }
+
+      const photos = mediaList.filter((item) => item.type === "photo");
+      if (photos.length > 0) {
+        const chunks = chunkArray(
+          photos.map((p) => p.url),
+          10
+        );
+        for (const chunk of chunks) {
+          const mediaGroup = chunk.map((url) => ({
+            type: "photo",
+            media: url,
+          }));
+          await bot.sendMediaGroup(chatId, mediaGroup);
+        }
+        return;
+      }
+
+      throw new Error("No valid media in IG API 1.");
+    };
+
     const igHandler2 = async (data) => {
       const result = data.result || {};
       const mediaUrls = result.url || [];
@@ -239,7 +271,27 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     const igHandler3 = async (data) => {
-      console.log("Instagram API 3:", data);
+      const result = data.result?.response;
+      if (
+        !result?.status ||
+        !Array.isArray(result.data) ||
+        result.data.length === 0
+      )
+        throw new Error("IG API 3 returned no valid media.");
+
+      const video = result.data.find((item) => item.type === "video");
+      if (!video?.url) throw new Error("No video URL found in IG API 3.");
+
+      const like = result.statistics?.like_count || 0;
+      const views = result.statistics?.play_count || 0;
+
+      const caption = `${format(views)} views\n${format(like)} likes`;
+
+      await bot.sendVideo(chatId, video.url, {
+        caption,
+        parse_mode: "Markdown",
+        supports_streaming: true,
+      });
     };
 
     try {
@@ -262,13 +314,15 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isInstagram) {
         const res1 = await axios.get(
-          `${
-            process.env.flowfalcon
-          }/download/instagram?url=${encodeURIComponent(input)}`,
+          `${process.env.vapis}/api/igdl?url=${encodeURIComponent(input)}`,
           { timeout: 8000 }
         );
-        const data1 = res1.data?.result?.data;
-        if (!res1.data?.status || !data1)
+        const data1 = res1.data;
+        if (
+          !data1?.status ||
+          !Array.isArray(data1.data) ||
+          data1.data.length === 0
+        )
           throw new Error("IG API 1 returned an invalid response.");
         await igHandler1(data1);
         await deleteStatus();
@@ -352,15 +406,17 @@ Downloads: ${data.stats?.download || "?"}`;
 
           if (isInstagram) {
             const res3 = await axios.get(
-              `${process.env.vreden}/api/instagram?url=${encodeURIComponent(
+              `${process.env.vreden}/api/igdownload?url=${encodeURIComponent(
                 input
               )}`,
               { timeout: 8000 }
             );
-            const result3 = res3.data?.result;
-            if (!res3.data?.status || !result3)
+            const data3 = res3.data;
+
+            if (data3?.status !== 200 || !data3?.result?.response?.status)
               throw new Error("IG API 3 returned an invalid response.");
-            await igHandler3(result3);
+
+            await igHandler3(data3);
             await deleteStatus();
             return;
           }
