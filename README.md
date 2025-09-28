@@ -98,10 +98,10 @@ myquran=
 
 - `node-telegram-bot-api`
 - `axios`
-- `file-type`
 - `dotenv`
-- `groq`
-- `supabase`
+- `groq-sdk`
+- `@supabase/supabase-js`
+- `module-alias`
 
 ## 🤝 Contributing
 
