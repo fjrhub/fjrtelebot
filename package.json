@@ -1,25 +1,24 @@
 {
   "name": "fjrtelebot",
   "version": "1.0.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "_moduleAliases": {
-    "@": "."
-  },
+  "packageManager": "pnpm@10.12.4",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0",
+    "@supabase/supabase-js": "^2.50.3",
     "axios": "^1.10.0",
-    "dotenv": "^16.5.0",
-    "groq-sdk": "^0.25.0",
+    "dotenv": "^16.3.1",
+    "groq-sdk": "^0.26.0",
     "module-alias": "^2.2.3",
-    "node-telegram-bot-api": "^0.66.0",
-    "nodemon": "^3.1.10"
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "_moduleAliases": {
+    "@": "./"
   }
 }
