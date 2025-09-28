@@ -1,9 +1,5 @@
-const {
-  sendMessageToGroq,
-  getChatHistory,
-  resetChat,
-} = require("../../utils/groq");
-const { privat } = require("../../utils/helper");
+const { sendMessageToGroq, getChatHistory, resetChat, } = require("@/utils/groq");
+const { privat } = require("@/utils/helper");
 
 module.exports = {
   name: "ai",

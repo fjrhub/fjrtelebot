@@ -1,4 +1,4 @@
-const { privat } = require("../../utils/helper");
+const { privat } = require('@/utils/helper');
 const axios = require("axios");
 require("dotenv").config();
 
@@ -8,7 +8,6 @@ module.exports = {
   async execute(bot, msg, args) {
     const chatId = msg.chat.id;
     const input = args.slice(0).join(" ");
-    console.log(input);
     if (!privat(chatId)) return;
     if (input) {
       try {
@@ -19,10 +18,9 @@ module.exports = {
         const result = response.data.result.answer;
         bot.sendMessage(chatId, result);
       } catch (error) {
-        console.error(error);
         bot.sendMessage(
           chatId,
-          "Terjadi kesalahan saat mengambil data dari API."
+          "An error occurs when taking data from the fire."
         );
       }
     } else {

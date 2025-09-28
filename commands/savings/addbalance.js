@@ -1,5 +1,5 @@
-const { privat } = require("../../utils/helper");
-const { insertBalance } = require("../../utils/supabase");
+const { privat } = require("@/utils/helper");
+const { insertBalance } = require("@/utils/helper");
 
 module.exports = {
   name: "addbalance",

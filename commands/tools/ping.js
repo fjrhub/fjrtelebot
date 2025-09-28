@@ -1,4 +1,4 @@
-const { privat } = require("../../utils/helper");
+const { privat } = require("@/utils/helper");
 
 module.exports = {
   name: "ping",

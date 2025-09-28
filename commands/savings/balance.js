@@ -1,5 +1,5 @@
-const { getWIBTime, privat } = require("../../utils/helper");
-const { getAllBalances, getSingleBalance } = require("../../utils/supabase");
+const { getWIBTime, privat } = require("@/utils/helper");
+const { getAllBalances, getSingleBalance } = require("@/utils/supabase");
 
 module.exports = {
   name: "balance",
