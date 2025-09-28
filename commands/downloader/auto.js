@@ -346,15 +346,17 @@ Downloads: ${data.stats?.download || "?"}`;
         return;
       }
 
-      const res1 = await axios.get(
-        `${process.env.nekorinn}/downloader/tikwm?url=${encodeURIComponent(
-          input
-        )}`,
-        { timeout: 8000 }
-      );
-      const data1 = res1.data?.result;
-      await handlerApi1(data1);
-      await deleteStatus();
+      throw new Error("Skipping TikTok API 1");
+
+      // const res1 = await axios.get(
+      //   `${process.env.nekorinn}/downloader/tikwm?url=${encodeURIComponent(
+      //     input
+      //   )}`,
+      //   { timeout: 8000 }
+      // );
+      // const data1 = res1.data?.result;
+      // await handlerApi1(data1);
+      // await deleteStatus();
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1.message);
       try {
