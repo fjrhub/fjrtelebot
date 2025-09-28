@@ -156,8 +156,8 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
 
 async function testUpdateModel() {
   const { error } = await supabase
-    .from('saldo')
-    .update({ model: 'groqModel' })
+    .from('groqModel')
+    .update({ model: 'compound-beta-mini' })
     .eq('id', 1); // Update row where id = 1
 
   if (error) {
