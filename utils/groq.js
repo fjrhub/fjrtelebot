@@ -2,7 +2,7 @@ const { Groq } = require("groq-sdk");
 const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
-const { getUserModel } = require("@/utils/userModelSelection");
+const { userModelSelection } = require("@/utils/userModelSelection");
 dotenv.config();
 
 const groq = new Groq({
@@ -34,7 +34,7 @@ function saveConversations() {
 
 loadConversations();
 
-async function sendMessageToGroq(userId, userMessage) {
+async function sendMessageToGroq(userId, userMessage, modelId = 2) {
   const id = userId.toString();
 
   if (!conversations[id]) {
@@ -46,11 +46,14 @@ async function sendMessageToGroq(userId, userMessage) {
     content: userMessage
   });
 
-  const selectedModel = getUserModel(id) || 'compound-beta-mini'; // default
+  const selectedModel =
+    modelId === 1
+      ? userModelSelection.privat
+      : userModelSelection.authorized;
 
   const chatCompletion = await groq.chat.completions.create({
     messages: conversations[id],
-    model: selectedModel,
+    model: selectedModel || "compound-beta-mini",
     temperature: 1,
     max_completion_tokens: 1024,
     top_p: 1,
