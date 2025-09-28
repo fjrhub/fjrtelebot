@@ -9,6 +9,26 @@ module.exports = {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
     const input = args[0];
+    let statusMessage = null;
+
+    const sendOrEditStatus = async (text) => {
+      if (!statusMessage) {
+        statusMessage = await bot.sendMessage(chatId, text);
+      } else {
+        await bot.editMessageText(text, {
+          chat_id: chatId,
+          message_id: statusMessage.message_id,
+        });
+      }
+    };
+
+    const deleteStatus = async () => {
+      if (statusMessage) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await bot.deleteMessage(chatId, statusMessage.message_id);
+        statusMessage = null;
+      }
+    };
 
     const handlerApi1 = async (data) => {
       const videoUrl = data.media?.video_sd;
@@ -16,17 +36,12 @@ module.exports = {
 
       if (!videoUrl) throw new Error("SD video is not available.");
 
-      // Convert duration from milliseconds to minutes and seconds
       const totalSeconds = Math.floor(durationMs / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
 
-      let durationText = "";
-      if (minutes > 0) {
-        durationText = `${minutes} minute${seconds > 0 ? ` ${seconds}s` : ""}`;
-      } else {
-        durationText = `${seconds}s`;
-      }
+      const durationText =
+        minutes > 0 ? `${minutes} minute${seconds > 0 ? ` ${seconds}s` : ""}` : `${seconds}s`;
 
       await bot.sendVideo(chatId, videoUrl, {
         caption: "Duration: " + durationText,
@@ -35,62 +50,56 @@ module.exports = {
 
     const handlerApi2 = async (data) => {
       const videoUrl = data.media?.[1];
-
-      if (!videoUrl) {
-        throw new Error("No video URL found in API 2.");
-      }
-
+      if (!videoUrl) throw new Error("No video URL found in API 2.");
       await bot.sendVideo(chatId, videoUrl);
     };
 
     const handlerApi3 = async (data) => {
       const videoUrl = data.sd_url;
-
-      if (!videoUrl) {
-        throw new Error("No SD video URL found in API 3.");
-      }
-
+      if (!videoUrl) throw new Error("No SD video URL found in API 3.");
       await bot.sendVideo(chatId, videoUrl);
     };
 
     try {
+      await sendOrEditStatus("📡 Trying API 1...");
       const res1 = await axios.get(
-        `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(
-          input
-        )}`,
-        { timeout: 3000 }
+        `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(input)}`,
+        { timeout: 5000 }
       );
       const data1 = res1.data?.result;
       if (!res1.data?.status || !data1)
         throw new Error("API 1 returned an invalid response.");
       await handlerApi1(data1);
+      await deleteStatus();
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1.message);
       try {
+        await sendOrEditStatus("📡 API 1 failed. Trying API 2...");
         const res2 = await axios.get(
-          `${process.env.archive}/api/download/facebook?url=${encodeURIComponent(
-            input
-          )}`,
-          { timeout: 3000 }
+          `${process.env.archive}/api/download/facebook?url=${encodeURIComponent(input)}`,
+          { timeout: 5000 }
         );
-        const result = res2.data?.result;
-        if (!res2.data?.status || !result?.media)
+        const result2 = res2.data?.result;
+        if (!res2.data?.status || !result2?.media)
           throw new Error("API 2 returned an invalid response.");
-        await handlerApi2(result);
+        await handlerApi2(result2);
+        await deleteStatus();
       } catch (e2) {
         console.warn("⚠️ API 2 failed:", e2.message);
         try {
+          await sendOrEditStatus("📡 API 2 failed. Trying API 3...");
           const res3 = await axios.get(
             `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
-            { timeout: 20000 }
-          )
-          const result = res3.data?.data;
-          if (!result?.status || !result?.sd_url)
+            { timeout: 10000 }
+          );
+          const result3 = res3.data?.data;
+          if (!result3?.status || !result3?.sd_url)
             throw new Error("API 3 returned an invalid response.");
-          await handlerApi3(result);
+          await handlerApi3(result3);
+          await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
-          bot.sendMessage(chatId, "❌ All Facebook download APIs failed.");
+          await sendOrEditStatus("❌ All Facebook download APIs failed.");
         }
       }
     }
