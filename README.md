@@ -66,10 +66,20 @@ Fill in the variables in your `.env` file with your bot token and API keys.
 
 Example:
 ```
-BOT_TOKEN=xxxxxxxx
-GROQ_API_KEY=xxxxxxxx
-SUPABASE_URL=...
-SUPABASE_KEY=...
+TOKEN=123456789:ABCdefGhIjKlMnOpQrStUvWxYz
+PRIVATE=123456789
+GC=-987654321,123456789
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your-supabase-service-role-key
+WAIFU_API_URL=
+GROQ_API_KEY=
+FAST=
+diioffc=
+flowfalcon=
+archive=
+vreden=
+vapis=
+myquran=
 ```
 
 ## 💡 Bot Command Examples
