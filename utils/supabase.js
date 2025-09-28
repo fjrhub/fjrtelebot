@@ -154,8 +154,6 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
   };
 }
 
-const autoStatusCache = new Map();
-
 async function preloadAutoStatus() {
   const { data, error } = await supabase
     .from("auto_status")
@@ -167,11 +165,28 @@ async function preloadAutoStatus() {
   }
 }
 
+const autoStatusCache = new Map();
+const CACHE_TTL1 = 3 * 60 * 60 * 1000; // 3 hours in ms
+
+// ✅ Check if auto is enabled for a user
 async function isAutoEnabled(userId) {
-  if (autoStatusCache.has(userId)) {
-    return autoStatusCache.get(userId);
+  const cached = autoStatusCache.get(userId);
+
+  if (cached) {
+    const { value, timestamp } = cached;
+    const isExpired = Date.now() - timestamp > CACHE_TTL1;
+
+    if (!isExpired) {
+      console.log(`[CACHE HIT] Auto status for user ${userId}: ${value}`);
+      return value; // Use cached value
+    }
+
+    console.log(`[CACHE EXPIRED] Auto status for user ${userId}. Fetching from Supabase...`);
+    autoStatusCache.delete(userId); // Remove expired cache
   }
 
+  // 🔍 Query Supabase if cache is empty or expired
+  console.log(`[DB QUERY] Fetching auto status for user ${userId} from Supabase...`);
   const { data, error } = await supabase
     .from("auto_status")
     .select("status")
@@ -180,21 +195,30 @@ async function isAutoEnabled(userId) {
 
   if (!error && data) {
     const isActive = Number(data.status) === 1;
-    autoStatusCache.set(userId, isActive);
+    console.log(`[DB RESULT] Auto status for user ${userId}: ${isActive}`);
+    autoStatusCache.set(userId, { value: isActive, timestamp: Date.now() });
     return isActive;
   }
 
+  // Default: insert a new record → enabled
+  console.log(`[DB INSERT] No record found for user ${userId}, setting default status = true`);
   await setAutoStatus(userId, true);
   return true;
 }
 
+// ✅ Update status in Supabase and cache
 async function setAutoStatus(userId, status) {
+  console.log(`[DB UPSERT] Updating auto status for user ${userId} → ${status}`);
   await supabase.from("auto_status").upsert({
     id: userId,
     status: status ? 1 : 0,
   });
-  autoStatusCache.set(userId, !!status);
+
+  // Update cache immediately to stay consistent
+  console.log(`[CACHE UPDATE] Auto status for user ${userId} set to ${status}`);
+  autoStatusCache.set(userId, { value: !!status, timestamp: Date.now() });
 }
+
 
 module.exports = {
   supabase,
