@@ -205,36 +205,36 @@ Downloads: ${data.stats?.download || "?"}`;
       await bot.sendVideo(chatId, videoUrl);
     };
 
-    const igHandler1 = async (data) => {
-      const mediaList = data.data || [];
-      if (!Array.isArray(mediaList) || mediaList.length === 0)
-        throw new Error("No media found in IG API 1.");
+    const igHandler1 = async (input, bot, chatId) => {
+      const mediaItems = Array.isArray(input)
+        ? input
+        : Array.isArray(input?.data)
+        ? input.data
+        : [];
 
-      const video = mediaList.find((item) => item.type === "video");
-      if (video?.url) {
-        await bot.sendVideo(chatId, video.url, {
-          supports_streaming: true,
-        });
+      if (mediaItems.length === 0) {
+        throw new Error("IG API 1 returned empty media array.");
+      }
+
+      const images = mediaItems.filter((i) => i.type === "image");
+      const videos = mediaItems.filter((i) => i.type === "video");
+
+      if (videos.length) {
+        await bot.sendVideo(chatId, videos[0].url);
         return;
       }
 
-      const photos = mediaList.filter((item) => item.type === "photo");
-      if (photos.length > 0) {
-        const chunks = chunkArray(
-          photos.map((p) => p.url),
-          10
-        );
-        for (const chunk of chunks) {
-          const mediaGroup = chunk.map((url) => ({
-            type: "photo",
-            media: url,
-          }));
-          await bot.sendMediaGroup(chatId, mediaGroup);
-        }
+      if (images.length) {
+        const mediaGroup = images.slice(0, 10).map((img) => ({
+          type: "photo",
+          media: img.url,
+        }));
+
+        await bot.sendMediaGroup(chatId, mediaGroup);
         return;
       }
 
-      throw new Error("No valid media in IG API 1.");
+      throw new Error("IG API 1 returned unsupported media.");
     };
 
     const igHandler2 = async (data) => {
@@ -271,27 +271,40 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     const igHandler3 = async (data) => {
-      const result = data.result?.response;
-      if (
-        !result?.status ||
-        !Array.isArray(result.data) ||
-        result.data.length === 0
-      )
-        throw new Error("IG API 3 returned no valid media.");
+      const mediaItems = Array.isArray(data?.result?.response?.data)
+        ? data.result.response.data
+        : [];
 
-      const video = result.data.find((item) => item.type === "video");
-      if (!video?.url) throw new Error("No video URL found in IG API 3.");
+      if (mediaItems.length === 0) {
+        throw new Error("IG API 3 returned empty media array.");
+      }
 
-      const like = result.statistics?.like_count || 0;
-      const views = result.statistics?.play_count || 0;
+      const images = mediaItems.filter((i) => i.type === "image");
+      const videos = mediaItems.filter((i) => i.type === "video");
 
-      const caption = `${format(views)} views\n${format(like)} likes`;
+      if (videos.length > 0) {
+        await bot.sendVideo(chatId, videos[0].url, {
+          supports_streaming: true,
+        });
+        return;
+      }
 
-      await bot.sendVideo(chatId, video.url, {
-        caption,
-        parse_mode: "Markdown",
-        supports_streaming: true,
-      });
+      if (images.length > 0) {
+        const mediaUrls = images.map((i) => i.url);
+        const chunks = chunkArray(mediaUrls, 10);
+
+        for (let i = 0; i < chunks.length; i++) {
+          const mediaGroup = chunks[i].map((url) => ({
+            type: "photo",
+            media: url,
+          }));
+          await bot.sendMediaGroup(chatId, mediaGroup);
+        }
+
+        return;
+      }
+
+      throw new Error("IG API 3 returned unsupported media.");
     };
 
     try {
@@ -324,7 +337,8 @@ Downloads: ${data.stats?.download || "?"}`;
           data1.data.length === 0
         )
           throw new Error("IG API 1 returned an invalid response.");
-        await igHandler1(data1);
+
+        await igHandler1(data1, bot, chatId);
         await deleteStatus();
         return;
       }
