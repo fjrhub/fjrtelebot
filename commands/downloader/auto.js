@@ -71,29 +71,37 @@ module.exports = {
         const commentCount = data.result.comment_count || 0;
         const shareCount = data.result.share_count || 0;
         const downloadCount = data.result.download_count || 0;
+        const sizeInBytes = data.result.hd_size || 0;
 
-        // Create caption for media
+        const formatNumber = (num) => {
+          return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        };
+
         const caption = `
-Play Count: ${playCount}
-Comment Count: ${commentCount}
-Share Count: ${shareCount}
-Download Count: ${downloadCount}
+Play Count: ${formatNumber(playCount)}
+Comment Count: ${formatNumber(commentCount)}
+Share Count: ${formatNumber(shareCount)}
+Download Count: ${formatNumber(downloadCount)}
+Size: ${formatSize(sizeInBytes)}
     `.trim();
 
         const images = data.result.images || [];
 
         if (images.length > 0) {
-          // Prepare media group for sending images with caption on the first image
-          const mediaGroup = images.map((url, idx) => ({
-            type: "photo",
-            media: url,
-            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
-          }));
+          const maxImagesPerGroup = 10;
 
-          // Send media group with caption on the first image
-          await bot.sendMediaGroup(chatId, mediaGroup);
+          for (let i = 0; i < images.length; i += maxImagesPerGroup) {
+            const chunk = images.slice(i, i + maxImagesPerGroup);
+
+            const mediaGroup = chunk.map((url, idx) => ({
+              type: "photo",
+              media: url,
+              ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
+            }));
+
+            await bot.sendMediaGroup(chatId, mediaGroup);
+          }
         } else {
-          // Handle video logic if no images are present
           const hdPlayUrl =
             data.result.hdplay || data.result.play || data.result.wmplay;
           if (
@@ -104,10 +112,7 @@ Download Count: ${downloadCount}
             throw new Error("Invalid HD play URL from API: " + hdPlayUrl);
           }
 
-          const sizeInBytes = data.result.hd_size || 0;
-          const sizeFormatted = formatSize(sizeInBytes);
-          const videoCaption = `${caption}\nSize: ${sizeFormatted}`;
-
+          const videoCaption = caption;
           await bot.sendVideo(chatId, hdPlayUrl, { caption: videoCaption });
         }
       } else {
