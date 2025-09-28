@@ -1,24 +1,24 @@
-const { Groq } = require('groq-sdk');
-const dotenv = require('dotenv');
-const fs = require('fs');
-const path = require('path');
-
+const { Groq } = require("groq-sdk");
+const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
+const { getUserModel } = require("@/utils/userModelSelection");
 dotenv.config();
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const dbPath = path.resolve(__dirname, '../database.json');
+const dbPath = path.resolve(__dirname, "../database.json");
 let conversations = {};
 
 function loadConversations() {
   if (fs.existsSync(dbPath)) {
     try {
-      const raw = fs.readFileSync(dbPath, 'utf-8');
+      const raw = fs.readFileSync(dbPath, "utf-8");
       conversations = JSON.parse(raw);
     } catch (err) {
-      console.error('Failed to read database.json:', err.message);
+      console.error("Failed to read database.json:", err.message);
       conversations = {};
     }
   }
@@ -26,9 +26,9 @@ function loadConversations() {
 
 function saveConversations() {
   try {
-    fs.writeFileSync(dbPath, JSON.stringify(conversations, null, 2), 'utf-8');
+    fs.writeFileSync(dbPath, JSON.stringify(conversations, null, 2), "utf-8");
   } catch (err) {
-    console.error('Failed to save database.json:', err.message);
+    console.error("Failed to save database.json:", err.message);
   }
 }
 
@@ -46,9 +46,11 @@ async function sendMessageToGroq(userId, userMessage) {
     content: userMessage
   });
 
+  const selectedModel = getUserModel(id) || 'compound-beta-mini'; // default
+
   const chatCompletion = await groq.chat.completions.create({
     messages: conversations[id],
-    model: 'compound-beta-mini',
+    model: selectedModel,
     temperature: 1,
     max_completion_tokens: 1024,
     top_p: 1,
@@ -67,6 +69,7 @@ async function sendMessageToGroq(userId, userMessage) {
   return response;
 }
 
+
 function getChatHistory(userId) {
   return conversations[userId.toString()] || [];
 }
@@ -79,5 +82,5 @@ function resetChat(userId) {
 module.exports = {
   sendMessageToGroq,
   getChatHistory,
-  resetChat
+  resetChat,
 };
