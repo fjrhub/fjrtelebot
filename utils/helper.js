@@ -27,6 +27,33 @@ const getWIBTime = () => {
   }).format(new Date()).replace(/\//g, '/').replace(',', '');
 };
 
+// Get detailed parts of Jakarta time including weekday in English
+const getJakartaTimeParts = () => {
+  const now = new Date();
+
+  // Get weekday in English
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+  }).format(now); // Example: "Sunday"
+
+  // Format full date and time using Indonesian format
+  const formattedTime = getWIBTime(); // Example: "13/07/2025 19.42"
+
+  const [datePart, timePart] = formattedTime.split(' ');
+  const [day, month, year] = datePart.split('/');
+  const [hour, minute] = timePart.split('.');
+
+  return {
+    weekday,            // e.g. "Sunday"
+    year,
+    month,
+    day,
+    currentTime: `${hour}:${minute}`, // e.g. "19:42"
+  };
+};
+
+
 const startTime = Date.now();
 
 function getUptime() {
@@ -63,6 +90,7 @@ module.exports = {
   privat,
   getWIBTime,
   getUptime,
-  formatBytes
+  formatBytes,
+  getJakartaTimeParts
 };
 
