@@ -59,7 +59,7 @@ module.exports = {
       return result;
     };
 
-    const handlerApi1 = async (data) => {
+    const tthandler1 = async (data) => {
       const statsOnly = `Views: ${data.stats?.play || "0"}\nComments: ${
         data.stats?.comment || "0"
       }\nShares: ${data.stats?.share || "0"}`;
@@ -91,7 +91,7 @@ module.exports = {
       throw new Error("API 1 returned no valid downloadable content.");
     };
 
-    const handlerApi2 = async (data) => {
+    const tthandler2 = async (data) => {
       const statsOnly = `Views: ${format(data.metadata?.view)}
 Comments: ${format(data.metadata?.comment)}
 Shares: ${format(data.metadata?.share)}
@@ -130,7 +130,7 @@ Downloads: ${format(data.metadata?.download)}`;
       throw new Error("API 2 returned no valid downloadable content.");
     };
 
-    const handlerApi3 = async (data) => {
+    const tthandler3 = async (data) => {
       const statsOnly = `Views: ${data.stats?.views || "?"}
 Comments: ${data.stats?.comment || "?"}
 Shares: ${data.stats?.share || "?"}
@@ -355,7 +355,7 @@ Downloads: ${data.stats?.download || "?"}`;
       //   { timeout: 8000 }
       // );
       // const data1 = res1.data?.result;
-      // await handlerApi1(data1);
+      // await tthandler1(data1);
       // await deleteStatus();
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1.message);
@@ -407,7 +407,7 @@ Downloads: ${data.stats?.download || "?"}`;
           throw new Error(
             "API 2 (Archive - Tiktok) returned an invalid response."
           );
-        await handlerApi2(result2);
+        await tthandler2(result2);
         await deleteStatus();
       } catch (e2) {
         console.warn("⚠️ API 2 failed:", e2.message);
@@ -456,7 +456,7 @@ Downloads: ${data.stats?.download || "?"}`;
             throw new Error(
               "API 3 (Vreden - Tiktok) returned an invalid response."
             );
-          await handlerApi3(result3);
+          await tthandler3(result3);
           await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
