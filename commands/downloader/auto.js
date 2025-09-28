@@ -60,35 +60,23 @@ module.exports = {
     };
 
     const tthandler1 = async (data) => {
-      const statsOnly = `Views: ${data.stats?.play || "0"}\nComments: ${
-        data.stats?.comment || "0"
-      }\nShares: ${data.stats?.share || "0"}`;
+      if (!data || !Array.isArray(data.urls) || data.urls.length === 0) {
+        throw new Error("API 1 (Siputzx) did not return a valid URL.");
+      }
 
-      if (Array.isArray(data.images) && data.images.length > 0) {
-        const chunks = chunkArray(data.images, 10);
-        for (let i = 0; i < chunks.length; i++) {
-          const mediaGroup = chunks[i].map((url, idx) => ({
-            type: "photo",
-            media: url,
-            ...(i === 0 && idx === 0
-              ? { caption: statsOnly, parse_mode: "Markdown" }
-              : {}),
-          }));
-          await bot.sendMediaGroup(chatId, mediaGroup);
-        }
+      if (data.type === "photo") {
+        await bot.sendPhoto(chatId, data.urls[0]);
         return;
       }
 
-      if (data.videoUrl) {
-        await bot.sendVideo(chatId, data.videoUrl, {
-          caption: statsOnly,
-          parse_mode: "Markdown",
+      if (data.type === "video") {
+        await bot.sendVideo(chatId, data.urls[0], {
           supports_streaming: true,
         });
         return;
       }
 
-      throw new Error("API 1 returned no valid downloadable content.");
+      throw new Error("API 1 returned an unsupported media type.");
     };
 
     const tthandler2 = async (data) => {
@@ -345,18 +333,21 @@ Downloads: ${data.stats?.download || "?"}`;
         await deleteStatus();
         return;
       }
+      const res1 = await axios.get(
+        `${process.env.siputzx}/api/d/tiktok?url=${encodeURIComponent(input)}`
+      );
 
-      throw new Error("Skipping TikTok API 1");
+      const data1 = res1.data?.data;
 
-      // const res1 = await axios.get(
-      //   `${process.env.nekorinn}/downloader/tikwm?url=${encodeURIComponent(
-      //     input
-      //   )}`,
-      //   { timeout: 8000 }
-      // );
-      // const data1 = res1.data?.result;
-      // await tthandler1(data1);
-      // await deleteStatus();
+      if (!res1.data?.status || !data1 || !Array.isArray(data1.urls)) {
+        throw new Error(
+          "API 1 (Siputzx - TikTok) returned an invalid response."
+        );
+      }
+
+      await tthandler1(data1);
+      await deleteStatus();
+      return;
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1.message);
       try {
