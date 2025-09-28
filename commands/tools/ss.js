@@ -1,6 +1,5 @@
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
-require("dotenv").config();
 
 module.exports = {
   name: "ss",
