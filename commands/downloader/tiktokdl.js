@@ -74,6 +74,7 @@ Downloads: ${format(data.metadata?.download)}`;
 
       const caption = `${durationLine}${statsOnly}`;
 
+      // Jika image_slide ada dan valid, kirim sebagai album foto
       if (
         Array.isArray(data.media?.image_slide) &&
         data.media.image_slide.length > 0
@@ -100,6 +101,7 @@ Downloads: ${format(data.metadata?.download)}`;
         return;
       }
 
+      // Jika video tersedia dan durasi bukan 0, kirim video
       if (data.media?.play && data.metadata?.durasi > 0) {
         await bot.sendVideo(chatId, data.media.play, {
           caption,
@@ -109,6 +111,7 @@ Downloads: ${format(data.metadata?.download)}`;
         return;
       }
 
+      // Fallback jika tidak ada konten valid
       await bot.sendMessage(
         chatId,
         "❌ No valid content to download from API 2."
@@ -117,27 +120,29 @@ Downloads: ${format(data.metadata?.download)}`;
 
     try {
       const res1 = await axios.get(
-        `${process.env.agatz}/download/tiktok?url=${encodeURIComponent(input)}`
+        `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(input)}`,
+        { timeout: 3000 }
       );
       const data1 = res1.data?.result?.data;
       if (!res1.data?.status || !data1)
-        throw new Error("response API 1 invalid");
+        throw new Error("Respon API 1 tidak valid");
       await handlerApi1(data1);
     } catch (e1) {
-      console.warn("⚠️ API 1 failed, try the 2nd API ...");
+      console.warn("⚠️ API 1 gagal, mencoba API ke-2...");
       try {
         const res2 = await axios.get(
           `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
             input
-          )}`
+          )}`,
+          { timeout: 3000 }
         );
         const result = res2.data?.result;
         if (!res2.data?.status || !result?.media?.play)
-          throw new Error("API response 2 invalid");
+          throw new Error("Respon API 2 tidak valid");
         await handlerApi2(result);
       } catch (e2) {
-        console.error("❌ All API failed:", e2.message);
-        bot.sendMessage(chatId, "❌ All API failed.");
+        console.error("❌ Semua API gagal:", e2.message);
+        bot.sendMessage(chatId, "❌ Semua API gagal.");
       }
     }
   },
