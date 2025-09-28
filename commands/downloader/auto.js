@@ -16,7 +16,7 @@ module.exports = {
     const instagramRegex =
       /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+\/?(?:\?[^ ]*)?$/i;
     const facebookRegex =
-      /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/r\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
+      /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/(?:r|v)\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
 
     const isTikTok = tiktokRegex.test(text);
     const isInstagram = instagramRegex.test(text);
@@ -178,9 +178,9 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     const fbHandler1 = async (data) => {
-      const videoUrl = data.media?.video_sd;
+      const videoUrl = data.media?.video_hd;
       const durationMs = parseInt(data.info?.duration || "0");
-      if (!videoUrl) throw new Error("SD video is not available.");
+      if (!videoUrl) throw new Error("HD video is not available.");
       const totalSeconds = Math.floor(durationMs / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
@@ -194,14 +194,14 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     const fbHandler2 = async (data) => {
-      const videoUrl = data.media?.[1];
-      if (!videoUrl) throw new Error("No video URL found in API 2.");
+      const videoUrl = data.media?.[2];
+      if (!videoUrl) throw new Error("No HD video URL found in API 2.");
       await bot.sendVideo(chatId, videoUrl);
     };
 
     const fbHandler3 = async (data) => {
-      const videoUrl = data.sd_url;
-      if (!videoUrl) throw new Error("No SD video URL found in API 3.");
+      const videoUrl = data.hd_url;
+      if (!videoUrl) throw new Error("No HD video URL found in API 3.");
       await bot.sendVideo(chatId, videoUrl);
     };
 
