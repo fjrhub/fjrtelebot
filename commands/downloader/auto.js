@@ -225,25 +225,28 @@ Downloads: ${data.stats?.download || "?"}`;
       await bot.sendVideo(chatId, videoUrl);
     };
 
-    const igHandler1 = async (input, bot, chatId) => {
-      const result = input?.result;
-      const urls = Array.isArray(result?.downloadUrl) ? result.downloadUrl : [];
+    const igHandler1 = async (data) => {
+      const results = Array.isArray(data?.result) ? data.result : [];
 
-      if (urls.length === 0 || !result?.metadata) {
+      if (results.length === 0) {
         throw new Error("IG API 1 returned invalid or empty media.");
       }
 
-      const isVideo = result.metadata.isVideo;
+      const urls = results
+        .map((item) => item?.url)
+        .filter((u) => typeof u === "string" && u.length > 0);
 
-      if (isVideo) {
-        const videoUrl =
-          urls.find((url) => url && url.endsWith(".mp4")) || urls[0];
-        if (!videoUrl) throw new Error("No valid video URL found.");
-        await bot.sendVideo(chatId, videoUrl);
-        return;
+      if (urls.length === 0) {
+        throw new Error("No valid media URLs found.");
       }
 
-      const photoUrls = urls.filter((url) => url);
+      const videoUrls = urls.filter((u) => u.includes(".mp4"));
+      const photoUrls = urls.filter((u) => !u.includes(".mp4"));
+
+      if (videoUrls.length) {
+        await bot.sendVideo(chatId, videoUrls[0]);
+        return;
+      }
 
       if (photoUrls.length) {
         const mediaGroup = photoUrls.slice(0, 10).map((img) => ({
@@ -254,9 +257,7 @@ Downloads: ${data.stats?.download || "?"}`;
         return;
       }
 
-      throw new Error(
-        "IG API 1 returned unsupported media type or no valid URLs."
-      );
+      throw new Error("IG API 1 returned unsupported media type.");
     };
 
     const igHandler2 = async (data) => {
@@ -354,26 +355,27 @@ Downloads: ${data.stats?.download || "?"}`;
       if (isInstagram) {
         const res1 = await axios.get(
           `${
-            process.env.nekorinn
-          }/downloader/instagram?url=${encodeURIComponent(input)}`,
+            process.env.diioffc
+          }/api/download/instagram?url=${encodeURIComponent(input)}`,
           { timeout: 8000 }
         );
         const data1 = res1.data;
 
         if (
           !data1?.status ||
-          !data1.result ||
-          !Array.isArray(data1.result.downloadUrl) ||
-          data1.result.downloadUrl.length === 0
-        )
+          !Array.isArray(data1.result) ||
+          data1.result.length === 0
+        ) {
           throw new Error(
-            "API 1 (Nekorinn - Instagram) returned an invalid response."
+            "API 1 (diioffc - Instagram) returned an invalid response."
           );
+        }
 
-        await igHandler1(data1, bot, chatId);
+        await igHandler1(data1);
         await deleteStatus();
         return;
       }
+
       const res1 = await axios.get(
         `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
           input
@@ -381,7 +383,9 @@ Downloads: ${data.stats?.download || "?"}`;
       );
       const data1 = res1.data?.result;
       if (!res1.data?.status || !data1) {
-        throw new Error("API returned an invalid response.");
+        throw new Error(
+          "API 1 (diioffc - Tiktok) returned an invalid response."
+        );
       }
 
       await tthandler1({ result: data1 });
