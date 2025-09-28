@@ -1,5 +1,5 @@
-const { privat } = require("@/utils/helper");
-const { setUserModel } = require("@/utils/userModelSelection");
+const { privat, isAuthorized } = require("@/utils/helper");
+const { setModel } = require("@/utils/userModelSelection");
 
 module.exports = {
   name: "model",
@@ -7,7 +7,7 @@ module.exports = {
   async execute(bot, msg) {
     const chatId = msg.chat.id;
 
-    if (!privat(chatId)) {
+    if (!isAuthorized(chatId)) {
       return bot.sendMessage(chatId, "❌ You don't have permission.");
     }
 
@@ -61,18 +61,23 @@ module.exports = {
     const data = query.data;
     const modelId = data.split(":")[1];
 
+    const role = privat(chatId) ? "privat" : "authorized";
+
     try {
-      setUserModel(chatId, modelId);
-      await bot.sendMessage(chatId, `✅ Model updated to:\n*${modelId}*`, {
-        parse_mode: "Markdown",
-      });
+      setModel(role, modelId);
+      await bot.sendMessage(
+        chatId,
+        `✅ Model for *${role}* updated to:\n*${modelId}*`,
+        {
+          parse_mode: "Markdown",
+        }
+      );
     } catch (error) {
       await bot.sendMessage(
         chatId,
         `❌ Failed to update model: ${error.message}`
       );
     }
-
     await bot.answerCallbackQuery(query.id);
   },
 };
