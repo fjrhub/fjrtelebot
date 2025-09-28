@@ -77,12 +77,12 @@ SUPABASE_KEY=...
 | Perintah         | Fungsi                              |
 |------------------|-------------------------------------|
 | `/ai <prompt>`   | AI Chat                            |
-| `auto_on`        | Mengaktifkan auto-reply            |
-| `waifu`          | Mengirim gambar waifu random       |
-| `sholat`         | Menampilkan jadwal sholat          |
-| `balance`        | Menampilkan saldo pengguna         |
-| `addbalance`     | Menambah saldo pengguna            |
-| `duck <query>`   | Mencari informasi via DuckDuckGo   |
+| `/auto_on`        | Mengaktifkan auto-reply            |
+| `/waifu`          | Mengirim gambar waifu random       |
+| `/sholat`         | Menampilkan jadwal sholat          |
+| `/balance`        | Menampilkan saldo pengguna         |
+| `/addbalance`     | Menambah saldo pengguna            |
+| `/duck <query>`   | Mencari informasi via DuckDuckGo   |
 
 ## ✅ Dependensi Utama
 
@@ -90,18 +90,10 @@ SUPABASE_KEY=...
 - `axios`
 - `file-type`
 - `dotenv`
-- `openai` / `groq`
+- `groq`
 - `supabase`
 
 ## 🤝 Kontribusi
 
 Pull request sangat diterima!  
 Pastikan struktur folder tetap modular dan gunakan format standar.
-
-## 🪪 Lisensi
-
-MIT License
-
----
-
-> Dibuat oleh [@fajrulcore](https://github.com/fajrulcore)
