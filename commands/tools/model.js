@@ -1,5 +1,5 @@
 const { privat } = require("@/utils/helper");
-const { updateGroqModel } = require("@/utils/supabase");
+const { setUserModel } = require("@/utils/userModelSelection");
 
 module.exports = {
   name: "model",
@@ -28,7 +28,7 @@ module.exports = {
       { label: "14", id: "meta-llama/llama-prompt-guard-2-86m" },
       { label: "15", id: "mistral-saba-24b" },
       { label: "16", id: "qwen-qwq-32b" },
-      { label: "17", id: "qwen/qwen3-32b" }
+      { label: "17", id: "qwen/qwen3-32b" },
     ];
 
     const listText = modelChoices.map((m) => `${m.label}. ${m.id}`).join("\n");
@@ -44,12 +44,16 @@ module.exports = {
       );
     }
 
-    await bot.sendMessage(chatId, `🔧 *Choose the model you want to use:*\n\n${listText}`, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        inline_keyboard: buttons,
-      },
-    });
+    await bot.sendMessage(
+      chatId,
+      `🔧 *Choose the model you want to use:*\n\n${listText}`,
+      {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: buttons,
+        },
+      }
+    );
   },
 
   async handleCallback(bot, query) {
@@ -57,14 +61,16 @@ module.exports = {
     const data = query.data;
     const modelId = data.split(":")[1];
 
-    const error = await updateGroqModel(modelId);
-
-    if (error) {
-      await bot.sendMessage(chatId, `❌ Failed to update model: ${error.message}`);
-    } else {
+    try {
+      setUserModel(chatId, modelId);
       await bot.sendMessage(chatId, `✅ Model updated to:\n*${modelId}*`, {
         parse_mode: "Markdown",
       });
+    } catch (error) {
+      await bot.sendMessage(
+        chatId,
+        `❌ Failed to update model: ${error.message}`
+      );
     }
 
     await bot.answerCallbackQuery(query.id);
