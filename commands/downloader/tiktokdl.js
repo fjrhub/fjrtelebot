@@ -170,7 +170,7 @@ Downloads: ${data.stats?.download || "?"}`;
         `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(
           input
         )}`,
-        { timeout: 5000 }
+        { timeout: 8000 }
       );
       const data1 = res1.data?.result?.data;
       if (!res1.data?.status || !data1)
@@ -185,7 +185,7 @@ Downloads: ${data.stats?.download || "?"}`;
           `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
             input
           )}`,
-          { timeout: 5000 }
+          { timeout: 8000 }
         );
         const result2 = res2.data?.result;
         if (!res2.data?.status || !result2?.media)
@@ -198,7 +198,7 @@ Downloads: ${data.stats?.download || "?"}`;
           await sendOrEditStatus("📡 API 2 failed. Trying API 3...");
           const res3 = await axios.get(
             `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
-            { timeout: 5000 }
+            { timeout: 8000 }
           );
           const result3 = res3.data?.result;
           if (!res3.data?.status || !result3)

@@ -76,7 +76,7 @@ module.exports = {
         `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(
           input
         )}`,
-        { timeout: 5000 }
+        { timeout: 8000 }
       );
       const data1 = res1.data?.result;
       if (!res1.data?.status || !data1)
@@ -91,7 +91,7 @@ module.exports = {
           `${
             process.env.archive
           }/api/download/facebook?url=${encodeURIComponent(input)}`,
-          { timeout: 5000 }
+          { timeout: 8000 }
         );
         const result2 = res2.data?.result;
         if (!res2.data?.status || !result2?.media)
@@ -104,7 +104,7 @@ module.exports = {
           await sendOrEditStatus("📡 API 2 failed. Trying API 3...");
           const res3 = await axios.get(
             `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
-            { timeout: 10000 }
+            { timeout: 8000 }
           );
           const result3 = res3.data?.data;
           if (!result3?.status || !result3?.sd_url)
