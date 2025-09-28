@@ -29,11 +29,42 @@ const getWIBTime = () => {
   }).format(new Date()).replace(/\//g, '/').replace(',', '');
 };
 
+const startTime = Date.now();
+
+function getUptime() {
+  const now = Date.now();
+  const diff = now - startTime;
+  return formatDuration(diff);
+}
+
+function formatDuration(ms) {
+  const seconds = Math.floor(ms / 1000) % 60;
+  const minutes = Math.floor(ms / 1000 / 60) % 60;
+  const hours = Math.floor(ms / 1000 / 60 / 60) % 24;
+  const days = Math.floor(ms / 1000 / 60 / 60 / 24);
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
+
+function formatBytes(bytes) {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  while (bytes >= 1024 && i < units.length - 1) {
+    bytes /= 1024;
+    ++i;
+  }
+  return `${bytes.toFixed(2)} ${units[i]}`;
+}
+
+
+
 module.exports = {
   OWNER_ID,
   GROUP_ID,
   isAuthorized,
   privat,
-  getWIBTime
+  getWIBTime,
+  getUptime,
+  formatBytes
 };
 
