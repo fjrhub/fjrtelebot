@@ -60,56 +60,27 @@ module.exports = {
     };
 
     const tthandler1 = async (data) => {
-      if (data.type === "photo") {
-        let url;
-        if (Array.isArray(data.urls[0])) {
-          url = data.urls[0][0];
+      // Check if data is an object and has the expected structure
+      if (typeof data === "object" && data !== null) {
+        // Modified to only handle video from hdplay URL for now
+        if (data.result && data.result.hdplay) {
+          const hdPlayUrl = data.result.hdplay;
+          console.log("HD Play URL:", hdPlayUrl);
+          if (
+            !hdPlayUrl ||
+            typeof hdPlayUrl !== "string" ||
+            !hdPlayUrl.startsWith("http")
+          ) {
+            throw new Error("Invalid HD play URL from API: " + hdPlayUrl);
+          }
+          // Assuming the bot.sendVideo function is available
+          await bot.sendVideo(chatId, hdPlayUrl);
         } else {
-          url = data.urls[0];
-        }
-
-        console.log("Final Photo URL:", url);
-
-        if (!url || typeof url !== "string" || !url.startsWith("http")) {
-          throw new Error("Invalid photo URL from API 1: " + url);
-        }
-
-        await bot.sendPhoto(chatId, url);
-        return;
-      }
-
-      if (data.type === "slideshow") {
-        const allPhotos = data.urls.map((item) => item[0]);
-
-        const chunkArray = (arr, size) =>
-          arr.reduce(
-            (acc, _, i) =>
-              i % size === 0 ? [...acc, arr.slice(i, i + size)] : acc,
-            []
-          );
-
-        const chunks = chunkArray(allPhotos, 10);
-        for (const group of chunks) {
-          const mediaGroup = group.map((url) => ({
-            type: "photo",
-            media: url,
-          }));
-          await bot.sendMediaGroup(chatId, mediaGroup);
+          throw new Error("No HD play URL found in the API response.");
         }
         return;
       }
-
-      if (data.type === "video") {
-        const url = data.urls[0];
-        console.log("Final Video URL:", url);
-
-        await bot.sendVideo(chatId, url, {
-          supports_streaming: true,
-        });
-        return;
-      }
-
-      throw new Error("API 1 returned an unsupported media type.");
+      throw new Error("Unexpected data format.");
     };
 
     const tthandler2 = async (data) => {
@@ -367,18 +338,16 @@ Downloads: ${data.stats?.download || "?"}`;
         return;
       }
       const res1 = await axios.get(
-        `${process.env.siputzx}/api/d/tiktok?url=${encodeURIComponent(input)}`
+        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
+          input
+        )}`
       );
-
-      const data1 = res1.data?.data;
-
-      if (!res1.data?.status || !data1 || !Array.isArray(data1.urls)) {
-        throw new Error(
-          "API 1 (Siputzx - TikTok) returned an invalid response."
-        );
+      const data1 = res1.data?.result;
+      if (!res1.data?.status || !data1) {
+        throw new Error("API returned an invalid response.");
       }
 
-      await tthandler1(data1);
+      await tthandler1({ result: data1 });
       await deleteStatus();
       return;
     } catch (e1) {
