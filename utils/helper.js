@@ -1,4 +1,3 @@
-require('dotenv').config();
 
 // Convert from .env
 const allowedChatId = process.env.GC

@@ -1,9 +1,7 @@
 const { Groq } = require("groq-sdk");
-const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
 const { userModelSelection } = require("@/utils/userModelSelection");
-dotenv.config();
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
