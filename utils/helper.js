@@ -1,4 +1,3 @@
-
 // Convert from .env
 const allowedChatId = process.env.GC
   .split(',')
