@@ -8,7 +8,7 @@ module.exports = {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
 
-    const input = msg.text?.split(" ").slice(1).join(" ").trim();
+    let input = msg.text?.split(" ").slice(1).join(" ").trim();
     if (!input) {
       return bot.sendMessage(
         chatId,
@@ -50,6 +50,9 @@ module.exports = {
     };
 
     const screenshotFast = async (url) => {
+      if (!/^https?:\/\//i.test(url)) {
+        url = `https://${url}`;
+      }
       const apiUrl = `${process.env.FAST}/tool/screenshot?url=${encodeURIComponent(url)}&width=1280&height=800&delay=0&fullPage=false&darkMode=false&type=png`;
       const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
       if (!res.data) throw new Error("API 2 returned empty data.");
