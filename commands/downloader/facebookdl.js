@@ -14,7 +14,7 @@ module.exports = {
       const videoUrl = data.media?.video_sd;
       const durationMs = parseInt(data.info?.duration || "0");
 
-      if (!videoUrl) throw new Error("Video SD tidak tersedia.");
+      if (!videoUrl) throw new Error("SD video is not available.");
 
       // Convert duration from milliseconds to minutes and seconds
       const totalSeconds = Math.floor(durationMs / 1000);
@@ -33,9 +33,25 @@ module.exports = {
       });
     };
 
-    const handlerApi2 = async (data) => {};
+    const handlerApi2 = async (data) => {
+      const videoUrl = data.media?.[1];
 
-    const handlerApi3 = async (data) => {};
+      if (!videoUrl) {
+        throw new Error("No video URL found in API 2.");
+      }
+
+      await bot.sendVideo(chatId, videoUrl);
+    };
+
+    const handlerApi3 = async (data) => {
+      const videoUrl = data.sd_url;
+
+      if (!videoUrl) {
+        throw new Error("No SD video URL found in API 3.");
+      }
+
+      await bot.sendVideo(chatId, videoUrl);
+    };
 
     try {
       const res1 = await axios.get(
@@ -52,7 +68,7 @@ module.exports = {
       console.warn("⚠️ API 1 failed:", e1.message);
       try {
         const res2 = await axios.get(
-          `${process.env.archive}/api/download/fb?url=${encodeURIComponent(
+          `${process.env.archive}/api/download/facebook?url=${encodeURIComponent(
             input
           )}`,
           { timeout: 3000 }
@@ -65,11 +81,11 @@ module.exports = {
         console.warn("⚠️ API 2 failed:", e2.message);
         try {
           const res3 = await axios.get(
-            `${process.env.vreden}/api/fb?url=${encodeURIComponent(input)}`,
-            { timeout: 3000 }
-          );
-          const result = res3.data?.result;
-          if (!res3.data?.status || !result)
+            `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
+            { timeout: 20000 }
+          )
+          const result = res3.data?.data;
+          if (!result?.status || !result?.sd_url)
             throw new Error("API 3 returned an invalid response.");
           await handlerApi3(result);
         } catch (e3) {
