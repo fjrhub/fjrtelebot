@@ -15,6 +15,8 @@ module.exports = {
     const isAuto = await isAutoEnabled(chatId);
     if (!isAuto) return;
 
+    await bot.deleteMessage(chatId, msg.message_id);
+
     const input = text;
     let statusMessage = null;
 
