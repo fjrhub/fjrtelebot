@@ -1,4 +1,4 @@
-const { privat } = require("@/utils/helper");
+const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
 require("dotenv").config();
 
@@ -7,7 +7,7 @@ module.exports = {
   description: "TikTok downloader",
   async execute(bot, msg, args) {
     const chatId = msg.chat.id;
-    if (!privat(chatId)) return;
+    if (!isAuthorized(chatId)) return;
     const input = args[0];
 
     const format = (n) => n?.toLocaleString?.("en-US") || "0";
