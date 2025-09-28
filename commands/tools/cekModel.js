@@ -7,9 +7,7 @@ module.exports = {
   async execute(bot, msg) {
     const chatId = msg.chat.id;
 
-    if (!isAuthorized(chatId)) {
-      return bot.sendMessage(chatId, "❌ You are not authorized to use this command.");
-    }
+    if (!isAuthorized(chatId)) return;
 
     const isPriv = privat(chatId);
 

@@ -6,10 +6,7 @@ module.exports = {
   execute(bot, msg) {
     const chatId = msg.chat.id;
 
-    if (!privat(chatId)) {
-      return bot.sendMessage(chatId, "You don't have permission.");
-    }
-
+    if (!privat(chatId)) return;
     const uptime = getUptime();
     const mem = process.memoryUsage();
 

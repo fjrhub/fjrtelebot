@@ -7,9 +7,7 @@ module.exports = {
   async execute(bot, msg) {
     const chatId = msg.chat.id;
 
-    if (!isAuthorized(chatId)) {
-      return bot.sendMessage(chatId, "❌ You don't have permission.");
-    }
+    if (!isAuthorized(chatId)) return;
 
     const modelChoices = [
       { label: "1", id: "allam-2-7b" },
