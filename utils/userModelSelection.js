@@ -1,6 +1,6 @@
 const userModelSelection = {
   privat: "compound-beta-mini",
-  authorized: "compound-beta",
+  authorized: "llama3-70b-8192",
 };
 
 function getModelByRole(chatId) {
