@@ -9,6 +9,26 @@ module.exports = {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
     const input = args[0];
+    let statusMessage = null;
+
+    const sendOrEditStatus = async (text) => {
+      if (!statusMessage) {
+        statusMessage = await bot.sendMessage(chatId, text);
+      } else {
+        await bot.editMessageText(text, {
+          chat_id: chatId,
+          message_id: statusMessage.message_id,
+        });
+      }
+    };
+
+    const deleteStatus = async () => {
+      if (statusMessage) {
+        await new Promise(res => setTimeout(res, 1000));
+        await bot.deleteMessage(chatId, statusMessage.message_id);
+        statusMessage = null;
+      }
+    };
 
     const format = (n) => n?.toLocaleString?.("en-US") || "0";
     const chunkArray = (arr, size) => {
@@ -119,29 +139,47 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     try {
-      const res1 = await axios.get(`${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
+      await sendOrEditStatus("📡 Trying API 1...");
+      const res1 = await axios.get(
+        `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(input)}`,
+        { timeout: 5000 }
+      );
       const data1 = res1.data?.result?.data;
-      if (!res1.data?.status || !data1) throw new Error("API 1 returned an invalid response.");
+      if (!res1.data?.status || !data1)
+        throw new Error("API 1 returned an invalid response.");
       await handlerApi1(data1);
+      await deleteStatus();
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1.message);
       try {
-        const res2 = await axios.get(`${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
-        const result = res2.data?.result;
-        if (!res2.data?.status || !result?.media) throw new Error("API 2 returned an invalid response.");
-        await handlerApi2(result);
+        await sendOrEditStatus("📡 API 1 failed. Trying API 2...");
+        const res2 = await axios.get(
+          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(input)}`,
+          { timeout: 5000 }
+        );
+        const result2 = res2.data?.result;
+        if (!res2.data?.status || !result2?.media)
+          throw new Error("API 2 returned an invalid response.");
+        await handlerApi2(result2);
+        await deleteStatus();
       } catch (e2) {
         console.warn("⚠️ API 2 failed:", e2.message);
         try {
-          const res3 = await axios.get(`${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`, { timeout: 3000 });
-          const result = res3.data?.result;
-          if (!res3.data?.status || !result) throw new Error("API 3 returned an invalid response.");
-          await handlerApi3(result);
+          await sendOrEditStatus("📡 API 2 failed. Trying API 3...");
+          const res3 = await axios.get(
+            `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
+            { timeout: 5000 }
+          );
+          const result3 = res3.data?.result;
+          if (!res3.data?.status || !result3)
+            throw new Error("API 3 returned an invalid response.");
+          await handlerApi3(result3);
+          await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
-          bot.sendMessage(chatId, "❌ All TikTok download APIs failed.");
+          await sendOrEditStatus("❌ All TikTok download APIs failed.");
         }
       }
     }
-  }
+  },
 };
