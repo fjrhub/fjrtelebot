@@ -6,23 +6,23 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 async function insertBalance(amount, information, wallet) {
   wallet = wallet.toUpperCase(); // Make sure capitalization
 
-  const { data: existingSaldo, error: selectError } = await supabase
-    .from("saldo")
+  const { data: existingBalance, error: selectError } = await supabase
+    .from("balance")
     .select("amount")
     .eq("wallet", wallet)
     .single();
 
   if (selectError) return { error: selectError };
 
-  const { error: transaksiError } = await supabase
-    .from("transaksi")
+  const { error: transactionError } = await supabase
+    .from("transaction")
     .insert([{ amount, information, wallet }]);
 
-  if (transaksiError) return { error: transaksiError };
+  if (transactionError) return { error: transactionError };
 
   const { error: updateError } = await supabase
-    .from("saldo")
-    .update({ amount: existingSaldo.amount + amount })
+    .from("balance")
+    .update({ amount: existingBalance.amount + amount })
     .eq("wallet", wallet);
 
   return { error: updateError };
@@ -30,12 +30,12 @@ async function insertBalance(amount, information, wallet) {
 
 // Get all balance data ordered by ID (ascending)
 async function getAllBalances() {
-  return await supabase.from('saldo').select('*').order('id', { ascending: true });
+  return await supabase.from('balance').select('*').order('id', { ascending: true });
 }
 
 // Take one balance data (first)
 async function getSingleBalance() {
-  return await supabase.from('saldo').select('*').eq("wallet", "DOMPET").single();
+  return await supabase.from('balance').select('*').eq("wallet", "DOMPET").single();
 }
 
 const transactionsCache = new Map();
@@ -65,7 +65,7 @@ async function getTransactions({ wallet, month, page = 1, limit = 15 }) {
 
   // If it's not in the cache, take it from Supabase
   let query = supabase
-    .from("transaksi")
+    .from("transaction")
     .select("*")
     .order("date", { ascending: true });
 
@@ -94,7 +94,7 @@ async function getTransactions({ wallet, month, page = 1, limit = 15 }) {
 async function updateTransactionAndBalance(id, newAmount, newInfo) {
   // Get old transaction
   const { data: oldTx, error: getErr } = await supabase
-    .from("transaksi")
+    .from("transaction")
     .select("*")
     .eq("id", id)
     .single();
@@ -109,7 +109,7 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
 
   // Update the transaction
   const { error: updateTxError } = await supabase
-    .from("transaksi")
+    .from("transaction")
     .update({
       amount: newAmount,
       information: newInfo,
@@ -122,26 +122,26 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
   }
 
   // Get current balance
-  const { data: currentBalance, error: saldoErr } = await supabase
-    .from("saldo")
+  const { data: currentBalance, error: balanceErr } = await supabase
+    .from("balance")
     .select("amount")
     .eq("wallet", wallet)
     .single();
 
-  if (saldoErr || !currentBalance) {
-    return { error: `Failed to fetch balance: ${saldoErr.message}` };
+  if (balanceErr || !currentBalance) {
+    return { error: `Failed to fetch balance: ${balanceErr.message}` };
   }
 
   const newBalance = currentBalance.amount + diff;
 
   // Update the balance
-  const { error: updateSaldoErr } = await supabase
-    .from("saldo")
+  const { error: updatebalanceErr } = await supabase
+    .from("balance")
     .update({ amount: newBalance })
     .eq("wallet", wallet);
 
-  if (updateSaldoErr) {
-    return { error: `Failed to update balance: ${updateSaldoErr.message}` };
+  if (updatebalanceErr) {
+    return { error: `Failed to update balance: ${updatebalanceErr.message}` };
   }
 
   return {
@@ -154,22 +154,11 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
   };
 }
 
-async function updateGroqModel(modelId) {
-  const { error } = await supabase
-    .from("groqModel")
-    .update({ model: modelId })
-    .eq("id", 1);
-
-  return error;
-}
-
-
 module.exports = {
   supabase,
   insertBalance,
   getAllBalances,
   getSingleBalance,
   getTransactions,
-  updateTransactionAndBalance,
-  updateGroqModel
+  updateTransactionAndBalance
 };

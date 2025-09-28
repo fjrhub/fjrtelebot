@@ -25,7 +25,7 @@ module.exports = {
     const { error } = await insertBalance(amount, information, wallet);
 
     if (error) {
-      // Wallet not found in saldo
+      // Wallet not found in balance
       if (error.code === 'PGRST116') {
         return bot.sendMessage(chatId, `❌ Wallet *${wallet}* not found in balance.\nPlease add the wallet first.`, {
           parse_mode: "Markdown",
