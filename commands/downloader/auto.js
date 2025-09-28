@@ -12,11 +12,11 @@ module.exports = {
     if (!text) return;
 
     const tiktokRegex =
-      /(?:http(?:s)?:\/\/)?(?:www\.|vt\.)?tiktok\.com\/[^\s]+/i;
+      /^(?:https?:\/\/)?(?:www\.|vm\.|vt\.)?tiktok\.com\/[^\s]+$/i;
     const instagramRegex =
-      /(?:http(?:s)?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+/i;
+      /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+\/?(?:\?[^ ]*)?$/i;
     const facebookRegex =
-      /(?:http(?:s)?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/r\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+/i;
+      /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/r\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
 
     const isTikTok = tiktokRegex.test(text);
     const isInstagram = instagramRegex.test(text);
