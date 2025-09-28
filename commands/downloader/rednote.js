@@ -1,40 +1,52 @@
 const { exec } = require("child_process");
+const axios = require("axios");
 const { privat } = require("@/utils/helper");
 
 module.exports = {
   name: "rednote",
-  description: "Ambil video dari link via yt-dlp dan kirim ke Telegram",
+  description: "Send video directly from a URL using yt-dlp",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
-    const text = msg.text || "";
     if (!privat(chatId)) return;
 
-    const parts = text.trim().split(" ");
-    if (parts.length < 2) {
-      bot.sendMessage(chatId, "❌ Format salah. Gunakan: `/send <link>`", { parse_mode: "Markdown" });
-      return;
-    }
+    const args = msg.text.trim().split(" ");
+    if (args.length < 2)
+      return bot.sendMessage(chatId, "Please provide a valid URL: /rednote <url>");
 
-    const inputUrl = parts[1];
+    const inputUrl = args[1];
 
-    // Jalankan yt-dlp untuk dapatkan direct video URL
-    exec(`yt-dlp -f best[ext=mp4] -g "${inputUrl}"`, async (err, stdout, stderr) => {
-      if (err) {
-        console.error("Gagal mengambil video:", err);
-        bot.sendMessage(chatId, "❌ Gagal mengambil video dari link.");
-        return;
-      }
-
-      const directVideoUrl = stdout.trim();
-
-      try {
-        await bot.sendVideo(chatId, directVideoUrl, {
-          caption: "✅ Berikut videonya dari yt-dlp!",
+    try {
+      // Extract direct video URL using yt-dlp
+      const directVideoUrl = await new Promise((resolve, reject) => {
+        exec(`yt-dlp -g "${inputUrl}"`, (err, stdout, stderr) => {
+          if (err) {
+            console.error("yt-dlp error:", stderr || err);
+            return reject("Failed to get direct video URL.");
+          }
+          resolve(stdout.trim());
         });
-      } catch (e) {
-        console.error("Gagal kirim video:", e.message);
-        bot.sendMessage(chatId, "❌ Gagal mengirim video. Mungkin URL tidak bisa diakses Telegram.");
-      }
-    });
+      });
+
+      // Fetch video stream using Axios
+      const videoResponse = await axios({
+        method: "GET",
+        url: directVideoUrl,
+        responseType: "stream",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Referer": inputUrl,
+          "Accept": "*/*",
+          "Connection": "keep-alive",
+        },
+      });
+
+      // Send video stream to Telegram
+      await bot.sendVideo(chatId, videoResponse.data, {
+        caption: "Here is the video 🎥",
+      });
+    } catch (err) {
+      console.error("Failed to send video:", err.message || err);
+      bot.sendMessage(chatId, "❌ Failed to fetch or send the video.");
+    }
   },
 };
