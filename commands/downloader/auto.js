@@ -1,7 +1,6 @@
 const { isAutoEnabled } = require("@/utils/supabase");
 const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
-require("dotenv").config();
 
 module.exports = {
   name: "auto",
