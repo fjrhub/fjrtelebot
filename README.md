@@ -88,6 +88,7 @@ myquran=
 |------------------|-------------------------------------|
 | `/ai <prompt>`   | Ask anything to AI                  |
 | `/auto_on`        | Enable auto-reply mode              |
+| `/auto_off`        | Disable auto-reply mode              |
 | `/waifu`          | Send a random waifu image           |
 | `/sholat`         | Show prayer times                   |
 | `/balance`        | Display user balance                |
