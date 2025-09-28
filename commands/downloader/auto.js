@@ -60,17 +60,50 @@ module.exports = {
     };
 
     const tthandler1 = async (data) => {
-      if (!data || !Array.isArray(data.urls) || data.urls.length === 0) {
-        throw new Error("API 1 (Siputzx) did not return a valid URL.");
+      if (data.type === "photo") {
+        let url;
+        if (Array.isArray(data.urls[0])) {
+          url = data.urls[0][0];
+        } else {
+          url = data.urls[0];
+        }
+
+        console.log("Final Photo URL:", url);
+
+        if (!url || typeof url !== "string" || !url.startsWith("http")) {
+          throw new Error("Invalid photo URL from API 1: " + url);
+        }
+
+        await bot.sendPhoto(chatId, url);
+        return;
       }
 
-      if (data.type === "photo") {
-        await bot.sendPhoto(chatId, data.urls[0]);
+      if (data.type === "slideshow") {
+        const allPhotos = data.urls.map((item) => item[0]);
+
+        const chunkArray = (arr, size) =>
+          arr.reduce(
+            (acc, _, i) =>
+              i % size === 0 ? [...acc, arr.slice(i, i + size)] : acc,
+            []
+          );
+
+        const chunks = chunkArray(allPhotos, 10);
+        for (const group of chunks) {
+          const mediaGroup = group.map((url) => ({
+            type: "photo",
+            media: url,
+          }));
+          await bot.sendMediaGroup(chatId, mediaGroup);
+        }
         return;
       }
 
       if (data.type === "video") {
-        await bot.sendVideo(chatId, data.urls[0], {
+        const url = data.urls[0];
+        console.log("Final Video URL:", url);
+
+        await bot.sendVideo(chatId, url, {
           supports_streaming: true,
         });
         return;
