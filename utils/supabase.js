@@ -154,11 +154,56 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
   };
 }
 
+const autoStatusCache = new Map();
+
+async function preloadAutoStatus() {
+  const { data, error } = await supabase
+    .from("auto_status")
+    .select("id, status");
+  if (!error && data) {
+    for (const user of data) {
+      autoStatusCache.set(user.id, user.status === 1);
+    }
+  }
+}
+
+async function isAutoEnabled(userId) {
+  if (autoStatusCache.has(userId)) {
+    return autoStatusCache.get(userId);
+  }
+
+  const { data, error } = await supabase
+    .from("auto_status")
+    .select("status")
+    .eq("id", userId)
+    .single();
+
+  if (!error && data) {
+    const isActive = Number(data.status) === 1;
+    autoStatusCache.set(userId, isActive);
+    return isActive;
+  }
+
+  await setAutoStatus(userId, true);
+  return true;
+}
+
+async function setAutoStatus(userId, status) {
+  await supabase.from("auto_status").upsert({
+    id: userId,
+    status: status ? 1 : 0,
+  });
+  autoStatusCache.set(userId, !!status);
+}
+
 module.exports = {
   supabase,
   insertBalance,
   getAllBalances,
   getSingleBalance,
   getTransactions,
-  updateTransactionAndBalance
+  updateTransactionAndBalance,
+  preloadAutoStatus,
+  isAutoEnabled,
+  setAutoStatus
 };
