@@ -59,28 +59,44 @@ module.exports = {
       return result;
     };
 
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
     const tthandler1 = async (data) => {
-      // Check if data is an object and has the expected structure
-      if (typeof data === "object" && data !== null) {
-        // Modified to only handle video from hdplay URL for now
-        if (data.result && data.result.hdplay) {
-          const hdPlayUrl = data.result.hdplay;
-          console.log("HD Play URL:", hdPlayUrl);
-          if (
-            !hdPlayUrl ||
-            typeof hdPlayUrl !== "string" ||
-            !hdPlayUrl.startsWith("http")
-          ) {
-            throw new Error("Invalid HD play URL from API: " + hdPlayUrl);
-          }
-          // Assuming the bot.sendVideo function is available
-          await bot.sendVideo(chatId, hdPlayUrl);
-        } else {
-          throw new Error("No HD play URL found in the API response.");
+      if (typeof data === "object" && data !== null && data.result) {
+        const hdPlayUrl =
+          data.result.hdplay || data.result.play || data.result.wmplay;
+        const sizeInBytes = data.result.hd_size || 0;
+        const playCount = data.result.play_count || 0;
+        const commentCount = data.result.comment_count || 0;
+        const shareCount = data.result.share_count || 0;
+        const downloadCount = data.result.download_count || 0;
+
+        const sizeFormatted = formatSize(sizeInBytes);
+
+        const caption = `
+Play Count: ${playCount}
+Comment Count: ${commentCount}
+Share Count: ${shareCount}
+Download Count: ${downloadCount}
+Size: ${sizeFormatted}
+    `.trim();
+
+        if (
+          !hdPlayUrl ||
+          typeof hdPlayUrl !== "string" ||
+          !hdPlayUrl.startsWith("http")
+        ) {
+          throw new Error("Invalid HD play URL from API: " + hdPlayUrl);
         }
-        return;
+
+        await bot.sendVideo(chatId, hdPlayUrl, { caption });
+      } else {
+        throw new Error("Invalid data format: missing expected properties.");
       }
-      throw new Error("Unexpected data format.");
     };
 
     const tthandler2 = async (data) => {
