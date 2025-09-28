@@ -11,6 +11,14 @@ module.exports = {
     const input = args[0];
     let statusMessage = null;
 
+    if (!input || !input.startsWith("https")) {
+      return bot.sendMessage(
+        chatId,
+        "❌ Please provide a valid TikTok URL.",
+        { parse_mode: "Markdown" }
+      );
+    }
+
     const sendOrEditStatus = async (text) => {
       if (!statusMessage) {
         statusMessage = await bot.sendMessage(chatId, text);
@@ -24,7 +32,7 @@ module.exports = {
 
     const deleteStatus = async () => {
       if (statusMessage) {
-        await new Promise(res => setTimeout(res, 1000));
+        await new Promise((res) => setTimeout(res, 1000));
         await bot.deleteMessage(chatId, statusMessage.message_id);
         statusMessage = null;
       }
@@ -51,7 +59,9 @@ Downloads: ${format(data.download_count)}`;
           const mediaGroup = chunks[i].map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(i === 0 && idx === 0 ? { caption: statsOnly, parse_mode: "Markdown" } : {}),
+            ...(i === 0 && idx === 0
+              ? { caption: statsOnly, parse_mode: "Markdown" }
+              : {}),
           }));
           await bot.sendMediaGroup(chatId, mediaGroup);
         }
@@ -59,7 +69,9 @@ Downloads: ${format(data.download_count)}`;
       }
 
       if (data.play) {
-        const caption = `${data.duration > 0 ? `Duration: ${data.duration}s\n` : ""}${statsOnly}`;
+        const caption = `${
+          data.duration > 0 ? `Duration: ${data.duration}s\n` : ""
+        }${statsOnly}`;
         await bot.sendVideo(chatId, data.play, {
           caption,
           parse_mode: "Markdown",
@@ -76,15 +88,22 @@ Downloads: ${format(data.download_count)}`;
 Comments: ${format(data.metadata?.comment)}
 Shares: ${format(data.metadata?.share)}
 Downloads: ${format(data.metadata?.download)}`;
-      const caption = `${data.metadata?.durasi > 0 ? `Duration: ${data.metadata.durasi}s\n` : ""}${statsOnly}`;
+      const caption = `${
+        data.metadata?.durasi > 0 ? `Duration: ${data.metadata.durasi}s\n` : ""
+      }${statsOnly}`;
 
-      if (Array.isArray(data.media?.image_slide) && data.media.image_slide.length > 0) {
+      if (
+        Array.isArray(data.media?.image_slide) &&
+        data.media.image_slide.length > 0
+      ) {
         const chunks = chunkArray(data.media.image_slide, 10);
         for (let i = 0; i < chunks.length; i++) {
           const mediaGroup = chunks[i].map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(i === 0 && idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
+            ...(i === 0 && idx === 0
+              ? { caption, parse_mode: "Markdown" }
+              : {}),
           }));
           await bot.sendMediaGroup(chatId, mediaGroup);
         }
@@ -108,18 +127,25 @@ Downloads: ${format(data.metadata?.download)}`;
 Comments: ${data.stats?.comment || "?"}
 Shares: ${data.stats?.share || "?"}
 Downloads: ${data.stats?.download || "?"}`;
-      const caption = `${data.durations > 0 ? `Duration: ${data.durations}s\n` : ""}${statsOnly}`;
+      const caption = `${
+        data.durations > 0 ? `Duration: ${data.durations}s\n` : ""
+      }${statsOnly}`;
 
       const photos = data.data?.filter((item) => item.type === "photo");
       const video = data.data?.find((item) => item.type === "nowatermark");
 
       if (photos?.length > 0) {
-        const chunks = chunkArray(photos.map(p => p.url), 10);
+        const chunks = chunkArray(
+          photos.map((p) => p.url),
+          10
+        );
         for (let i = 0; i < chunks.length; i++) {
           const mediaGroup = chunks[i].map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(i === 0 && idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
+            ...(i === 0 && idx === 0
+              ? { caption, parse_mode: "Markdown" }
+              : {}),
           }));
           await bot.sendMediaGroup(chatId, mediaGroup);
         }
@@ -141,7 +167,9 @@ Downloads: ${data.stats?.download || "?"}`;
     try {
       await sendOrEditStatus("📡 Trying API 1...");
       const res1 = await axios.get(
-        `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(input)}`,
+        `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(
+          input
+        )}`,
         { timeout: 5000 }
       );
       const data1 = res1.data?.result?.data;
@@ -154,7 +182,9 @@ Downloads: ${data.stats?.download || "?"}`;
       try {
         await sendOrEditStatus("📡 API 1 failed. Trying API 2...");
         const res2 = await axios.get(
-          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(input)}`,
+          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
+            input
+          )}`,
           { timeout: 5000 }
         );
         const result2 = res2.data?.result;

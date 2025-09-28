@@ -11,6 +11,14 @@ module.exports = {
     const input = args[0];
     let statusMessage = null;
 
+    if (!input || !input.startsWith("https")) {
+      return bot.sendMessage(
+        chatId,
+        "❌ Please provide a valid Facebook URL.",
+        { parse_mode: "Markdown" }
+      );
+    }
+
     const sendOrEditStatus = async (text) => {
       if (!statusMessage) {
         statusMessage = await bot.sendMessage(chatId, text);
@@ -24,7 +32,7 @@ module.exports = {
 
     const deleteStatus = async () => {
       if (statusMessage) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await bot.deleteMessage(chatId, statusMessage.message_id);
         statusMessage = null;
       }
@@ -41,7 +49,9 @@ module.exports = {
       const seconds = totalSeconds % 60;
 
       const durationText =
-        minutes > 0 ? `${minutes} minute${seconds > 0 ? ` ${seconds}s` : ""}` : `${seconds}s`;
+        minutes > 0
+          ? `${minutes} minute${seconds > 0 ? ` ${seconds}s` : ""}`
+          : `${seconds}s`;
 
       await bot.sendVideo(chatId, videoUrl, {
         caption: "Duration: " + durationText,
@@ -63,7 +73,9 @@ module.exports = {
     try {
       await sendOrEditStatus("📡 Trying API 1...");
       const res1 = await axios.get(
-        `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(input)}`,
+        `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(
+          input
+        )}`,
         { timeout: 5000 }
       );
       const data1 = res1.data?.result;
@@ -76,7 +88,9 @@ module.exports = {
       try {
         await sendOrEditStatus("📡 API 1 failed. Trying API 2...");
         const res2 = await axios.get(
-          `${process.env.archive}/api/download/facebook?url=${encodeURIComponent(input)}`,
+          `${
+            process.env.archive
+          }/api/download/facebook?url=${encodeURIComponent(input)}`,
           { timeout: 5000 }
         );
         const result2 = res2.data?.result;
