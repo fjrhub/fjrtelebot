@@ -1,4 +1,5 @@
 const { isAutoEnabled } = require("@/utils/supabase");
+const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
 require("dotenv").config();
 
@@ -6,6 +7,7 @@ module.exports = {
   name: "auto",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) return;
     const text = msg.text;
 
     const tiktokRegex = /(?:http(?:s)?:\/\/)?(?:www\.|vt\.)?tiktok\.com\/[^\s]+/i;
