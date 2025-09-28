@@ -1,4 +1,9 @@
-const { sendMessageToGroq, getChatHistory, resetChat, } = require("@/utils/groq");
+const {
+  sendMessageToGroq,
+  getChatHistory,
+  resetChat,
+} = require("@/utils/groq");
+
 const { isAuthorized, privat } = require("@/utils/helper");
 
 module.exports = {
@@ -9,8 +14,6 @@ module.exports = {
     const chatId = msg.chat.id;
 
     if (!isAuthorized(chatId)) return;
-
-    const modelId = privat(chatId) ? 1 : 2; // kamu bisa balik tergantung kebutuhan
 
     const text = msg.text?.trim();
 
@@ -32,6 +35,8 @@ _Your chat history is saved per user._`,
         }
       );
     }
+
+    const modelId = privat(chatId) ? 1 : 2;
 
     const args = text.split(" ").slice(1);
     const input = args.join(" ");
