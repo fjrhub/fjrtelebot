@@ -12,6 +12,12 @@ module.exports = {
     const tiktokRegex =
       /(?:http(?:s)?:\/\/)?(?:www\.|vt\.)?tiktok\.com\/[^\s]+/i;
     if (!text || !tiktokRegex.test(text)) return;
+    const instagramRegex =
+      /(?:http(?:s)?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+/i;
+    if (!text || !instagramRegex.test(text)) return;
+    const facebookRegex =
+      /(?:http(?:s)?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/r\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+/i;
+    if (!text || !facebookRegex.test(text)) return;
 
     const isAuto = await isAutoEnabled(chatId);
     if (!isAuto) return;
