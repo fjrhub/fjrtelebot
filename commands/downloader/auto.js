@@ -205,6 +205,43 @@ Downloads: ${data.stats?.download || "?"}`;
       await bot.sendVideo(chatId, videoUrl);
     };
 
+    const igHandler2 = async (data) => {
+      const result = data.result || {};
+      const mediaUrls = result.url || [];
+      const isVideo = result.isVideo;
+      const caption = `${format(result.like)} Likes`;
+
+      if (isVideo && mediaUrls.length > 0) {
+        await bot.sendVideo(chatId, mediaUrls[0], {
+          caption,
+          parse_mode: "Markdown",
+          supports_streaming: true,
+        });
+        return;
+      }
+
+      if (!isVideo && mediaUrls.length > 0) {
+        const chunks = chunkArray(mediaUrls, 10);
+        for (let i = 0; i < chunks.length; i++) {
+          const mediaGroup = chunks[i].map((url, idx) => ({
+            type: "photo",
+            media: url,
+            ...(i === 0 && idx === 0
+              ? { caption, parse_mode: "Markdown" }
+              : {}),
+          }));
+          await bot.sendMediaGroup(chatId, mediaGroup);
+        }
+        return;
+      }
+
+      throw new Error("IG API 2 returned no valid media.");
+    };
+
+    const igHandler3 = async (data) => {
+      console.log("Instagram API 3:", data);
+    };
+
     try {
       await sendOrEditStatus("📡 Trying API 1...");
 
@@ -223,6 +260,21 @@ Downloads: ${data.stats?.download || "?"}`;
         return;
       }
 
+      if (isInstagram) {
+        const res1 = await axios.get(
+          `${
+            process.env.flowfalcon
+          }/download/instagram?url=${encodeURIComponent(input)}`,
+          { timeout: 8000 }
+        );
+        const data1 = res1.data?.result?.data;
+        if (!res1.data?.status || !data1)
+          throw new Error("IG API 1 returned an invalid response.");
+        await igHandler1(data1);
+        await deleteStatus();
+        return;
+      }
+
       const res1 = await axios.get(
         `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(
           input
@@ -231,7 +283,7 @@ Downloads: ${data.stats?.download || "?"}`;
       );
       const data1 = res1.data?.result?.data;
       if (!res1.data?.status || !data1)
-        throw new Error("API 1 returned an invalid response.");
+        throw new Error("TikTok API 1 returned an invalid response.");
       await handlerApi1(data1);
       await deleteStatus();
     } catch (e1) {
@@ -254,6 +306,21 @@ Downloads: ${data.stats?.download || "?"}`;
           return;
         }
 
+        if (isInstagram) {
+          const res2 = await axios.get(
+            `${
+              process.env.archive
+            }/api/download/instagram?url=${encodeURIComponent(input)}`,
+            { timeout: 8000 }
+          );
+          const data2 = res2.data;
+          if (!data2?.status || !data2.result?.url?.length)
+            throw new Error("IG API 2 returned an invalid response.");
+          await igHandler2(data2);
+          await deleteStatus();
+          return;
+        }
+
         const res2 = await axios.get(
           `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
             input
@@ -262,7 +329,7 @@ Downloads: ${data.stats?.download || "?"}`;
         );
         const result2 = res2.data?.result;
         if (!res2.data?.status || !result2?.media)
-          throw new Error("API 2 returned an invalid response.");
+          throw new Error("TikTok API 2 returned an invalid response.");
         await handlerApi2(result2);
         await deleteStatus();
       } catch (e2) {
@@ -283,20 +350,35 @@ Downloads: ${data.stats?.download || "?"}`;
             return;
           }
 
+          if (isInstagram) {
+            const res3 = await axios.get(
+              `${process.env.vreden}/api/instagram?url=${encodeURIComponent(
+                input
+              )}`,
+              { timeout: 8000 }
+            );
+            const result3 = res3.data?.result;
+            if (!res3.data?.status || !result3)
+              throw new Error("IG API 3 returned an invalid response.");
+            await igHandler3(result3);
+            await deleteStatus();
+            return;
+          }
+
           const res3 = await axios.get(
             `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
           const result3 = res3.data?.result;
           if (!res3.data?.status || !result3)
-            throw new Error("API 3 returned an invalid response.");
+            throw new Error("TikTok API 3 returned an invalid response.");
           await handlerApi3(result3);
           await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
           await sendOrEditStatus(
             `❌ All ${
-              isFacebook ? "Facebook" : "TikTok/Instagram"
+              isFacebook ? "Facebook" : isInstagram ? "Instagram" : "TikTok"
             } download APIs failed.`
           );
         }
