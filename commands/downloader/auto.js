@@ -7,17 +7,21 @@ module.exports = {
   async execute(bot, msg) {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
+
     const text = msg.text;
+    if (!text) return;
 
     const tiktokRegex =
       /(?:http(?:s)?:\/\/)?(?:www\.|vt\.)?tiktok\.com\/[^\s]+/i;
-    if (!text || !tiktokRegex.test(text)) return;
     const instagramRegex =
       /(?:http(?:s)?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+/i;
-    if (!text || !instagramRegex.test(text)) return;
     const facebookRegex =
       /(?:http(?:s)?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/r\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+/i;
-    if (!text || !facebookRegex.test(text)) return;
+
+    const isTikTok = tiktokRegex.test(text);
+    const isInstagram = instagramRegex.test(text);
+    const isFacebook = facebookRegex.test(text);
+    if (!isTikTok && !isInstagram && !isFacebook) return;
 
     const isAuto = await isAutoEnabled(chatId);
     if (!isAuto) return;
@@ -173,8 +177,52 @@ Downloads: ${data.stats?.download || "?"}`;
       throw new Error("API 3 returned no valid downloadable content.");
     };
 
+    const fbHandler1 = async (data) => {
+      const videoUrl = data.media?.video_sd;
+      const durationMs = parseInt(data.info?.duration || "0");
+      if (!videoUrl) throw new Error("SD video is not available.");
+      const totalSeconds = Math.floor(durationMs / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      const durationText =
+        minutes > 0
+          ? `${minutes} minute${seconds > 0 ? ` ${seconds}s` : ""}`
+          : `${seconds}s`;
+      await bot.sendVideo(chatId, videoUrl, {
+        caption: "Duration: " + durationText,
+      });
+    };
+
+    const fbHandler2 = async (data) => {
+      const videoUrl = data.media?.[1];
+      if (!videoUrl) throw new Error("No video URL found in API 2.");
+      await bot.sendVideo(chatId, videoUrl);
+    };
+
+    const fbHandler3 = async (data) => {
+      const videoUrl = data.sd_url;
+      if (!videoUrl) throw new Error("No SD video URL found in API 3.");
+      await bot.sendVideo(chatId, videoUrl);
+    };
+
     try {
       await sendOrEditStatus("📡 Trying API 1...");
+
+      if (isFacebook) {
+        const res1 = await axios.get(
+          `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(
+            input
+          )}`,
+          { timeout: 8000 }
+        );
+        const data1 = res1.data?.result;
+        if (!res1.data?.status || !data1)
+          throw new Error("API 1 returned an invalid response.");
+        await fbHandler1(data1);
+        await deleteStatus();
+        return;
+      }
+
       const res1 = await axios.get(
         `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(
           input
@@ -186,10 +234,26 @@ Downloads: ${data.stats?.download || "?"}`;
         throw new Error("API 1 returned an invalid response.");
       await handlerApi1(data1);
       await deleteStatus();
-    } catch (e) {
-      console.error("❌ API 1 failed:", e.message);
+    } catch (e1) {
+      console.warn("⚠️ API 1 failed:", e1.message);
       try {
         await sendOrEditStatus("📡 API 1 failed. Trying API 2...");
+
+        if (isFacebook) {
+          const res2 = await axios.get(
+            `${
+              process.env.archive
+            }/api/download/facebook?url=${encodeURIComponent(input)}`,
+            { timeout: 8000 }
+          );
+          const result2 = res2.data?.result;
+          if (!res2.data?.status || !result2?.media)
+            throw new Error("API 2 returned an invalid response.");
+          await fbHandler2(result2);
+          await deleteStatus();
+          return;
+        }
+
         const res2 = await axios.get(
           `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
             input
@@ -205,6 +269,20 @@ Downloads: ${data.stats?.download || "?"}`;
         console.warn("⚠️ API 2 failed:", e2.message);
         try {
           await sendOrEditStatus("📡 API 2 failed. Trying API 3...");
+
+          if (isFacebook) {
+            const res3 = await axios.get(
+              `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
+              { timeout: 8000 }
+            );
+            const result3 = res3.data?.data;
+            if (!result3?.status || !result3?.sd_url)
+              throw new Error("API 3 returned an invalid response.");
+            await fbHandler3(result3);
+            await deleteStatus();
+            return;
+          }
+
           const res3 = await axios.get(
             `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
@@ -216,7 +294,11 @@ Downloads: ${data.stats?.download || "?"}`;
           await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
-          await sendOrEditStatus("❌ All TikTok download APIs failed.");
+          await sendOrEditStatus(
+            `❌ All ${
+              isFacebook ? "Facebook" : "TikTok/Instagram"
+            } download APIs failed.`
+          );
         }
       }
     }
