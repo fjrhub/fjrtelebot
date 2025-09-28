@@ -1,6 +1,5 @@
 const { privat } = require("@/utils/helper");
 const axios = require("axios");
-require("dotenv").config();
 
 module.exports = {
   name: "anim",
