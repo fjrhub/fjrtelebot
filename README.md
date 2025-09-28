@@ -4,7 +4,7 @@ A Node.js-based Telegram bot with multifunctional features including AI chat, me
 
 ## 🚀 Main Features
 
-- 🤖 **AI Chat** — AI-powered responses (via OpenAI or Groq).
+- 🤖 **AI Chat** — AI-powered responses (Groq).
 - ⬇️ **Downloader** — Download media from multiple sources.
 - 🕹️ **Entertainment** — Fun commands like `/waifu`.
 - 💰 **Savings** — Add, view, and edit user balance.
