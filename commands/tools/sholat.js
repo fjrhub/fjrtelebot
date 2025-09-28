@@ -12,7 +12,7 @@ module.exports = {
     try {
       const { weekday, day, month, year, currentTime } = getJakartaTimeParts();
 
-      const apiUrl = process.env.SHOLAT + `${year}/${month}/${day}`;
+      const apiUrl = `${process.env.SHOLAT}/v2/sholat/jadwal/1635/${year}/${month}/${day}`;
       const response = await axios.get(apiUrl);
 
       if (!response.data || !response.data.data || !response.data.data.jadwal) {
