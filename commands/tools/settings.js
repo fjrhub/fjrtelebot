@@ -22,8 +22,7 @@ module.exports = {
 
   async handleCallback(bot, query) {
     const chatId = query.message.chat.id;
-    const action = query.data.split(":")[1]; // ambil 'auto_on' atau 'auto_off'
-
+    const action = query.data.split(":")[1];
     if (!isAuthorized(chatId)) return;
 
     if (action === "auto_on") {
