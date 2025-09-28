@@ -23,7 +23,7 @@ module.exports = {
       );
     }
 
-    // Kalau hanya authorized biasa
+    // If it's just an ordinary authorized
     const model = getModelByRole(chatId) || "Not set";
     return bot.sendMessage(chatId,
       `🔍 Current model for *authorized* users:\n*${model}*`,
