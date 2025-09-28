@@ -7,7 +7,7 @@ module.exports = {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
     await setAutoStatus(chatId, false);
-    bot.sendMessage(chatId, "🛑 Auto TikTok Downloader is now *disabled*", {
+    bot.sendMessage(chatId, "🛑 Auto Downloader is now *disabled*", {
       parse_mode: "Markdown",
     });
   },
