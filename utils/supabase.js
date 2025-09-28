@@ -154,22 +154,14 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
   };
 }
 
-async function testUpdateModel() {
+async function updateGroqModel(modelId) {
   const { error } = await supabase
-    .from('groqModel')
-    .update({ model: 'compound-beta-mini' })
-    .eq('id', 1); // Update row where id = 1
+    .from("groqModel")
+    .update({ model: modelId })
+    .eq("id", 1);
 
-  if (error) {
-    console.error('Failed to update model:', error.message);
-  } else {
-    console.log('Successfully updated model to "groqModel" for id = 1');
-  }
+  return error;
 }
-
-testUpdateModel();
-
-
 
 
 module.exports = {
@@ -178,5 +170,6 @@ module.exports = {
   getAllBalances,
   getSingleBalance,
   getTransactions,
-  updateTransactionAndBalance
+  updateTransactionAndBalance,
+  updateGroqModel
 };
