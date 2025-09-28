@@ -1,5 +1,6 @@
 const TelegramBot = require("node-telegram-bot-api");
-const { handleCommand, handleCallback } = require("./handler");
+require('module-alias/register');
+const { handleCommand, handleCallback } = require("@/handler");
 require("dotenv").config();
 
 const token = process.env.TOKEN;
