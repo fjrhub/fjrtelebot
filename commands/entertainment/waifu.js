@@ -2,7 +2,7 @@ const { privat } = require("@/utils/helper");
 const axios = require("axios");
 
 module.exports = {
-  name: "anim",
+  name: "waifu",
   description: "Get a random waifu image from the API",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
