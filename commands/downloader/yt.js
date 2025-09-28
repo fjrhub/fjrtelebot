@@ -85,7 +85,7 @@ module.exports = {
     ytProcess.on("close", async (code) => {
       if (code === 0) {
         let message =
-          "✅ Download completed! The file has been saved in the *storage/* folder.";
+          "✅ Download completed! The file has been saved in the *yt-dlp/* folder.";
         if (videoTitle) {
           message += `\n\n🎬 Title: *${videoTitle}*`;
         }
