@@ -29,8 +29,9 @@ async function insertBalance(amount, information, wallet) {
 
 // Get all balance data ordered by ID (ascending)
 async function getAllBalances() {
-  return await supabase.from('balance').select('*').order('id', { ascending: true });
+  return await supabase .from('balance').select('*').gte('id', 1).lte('id', 10).order('id', { ascending: true })
 }
+
 
 // Take one balance data (first)
 async function getSingleBalance() {

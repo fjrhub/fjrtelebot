@@ -48,7 +48,10 @@ pnpm install
 # or: npm install / yarn install
 ```
 
-### 3. Copy and Configure `.env`
+### 3. Configure Environment Variables
+Create a `.env` file based on the provided `.env.example` and fill in the required information such as bot token, API keys, and database configuration.  
+**Do not share your `.env` file publicly.**
+
 ```bash
 cp .env.example .env
 nano .env
@@ -60,40 +63,18 @@ pnpm start
 # or: node index.js
 ```
 
-## 🧩 `.env` Configuration
-
-Fill in the variables in your `.env` file with your bot token and API keys.
-
-Example:
-```
-TOKEN=123456789:ABCdefGhIjKlMnOpQrStUvWxYz
-PRIVATE=123456789
-GC=-987654321,123456789
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_KEY=your-supabase-service-role-key
-WAIFU_API_URL=
-GROQ_API_KEY=
-FAST=
-diioffc=
-flowfalcon=
-archive=
-vreden=
-vapis=
-myquran=
-```
-
 ## 💡 Bot Command Examples
 
-| Command           | Function                            |
-|------------------|-------------------------------------|
-| `/ai <prompt>`   | Ask anything to AI                  |
+| Command           | Description                         |
+|-------------------|-------------------------------------|
+| `/ai <prompt>`    | Ask anything to AI                  |
 | `/auto_on`        | Enable auto-reply mode              |
-| `/auto_off`        | Disable auto-reply mode              |
+| `/auto_off`       | Disable auto-reply mode             |
 | `/waifu`          | Send a random waifu image           |
 | `/sholat`         | Show prayer times                   |
 | `/balance`        | Display user balance                |
 | `/addbalance`     | Add balance to a user               |
-| `/duck <query>`   | Search info using DuckDuckGo        |
+| `/duck <query>`   | Search information using DuckDuckGo |
 
 ## ✅ Main Dependencies
 
@@ -107,4 +88,4 @@ myquran=
 ## 🤝 Contributing
 
 Pull requests are welcome!  
-Please keep the folder structure modular and follow standard formatting.
+Please maintain the modular folder structure and follow standard formatting.

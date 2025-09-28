@@ -1,5 +1,5 @@
 const { privat, isAuthorized } = require("@/utils/helper");
-const { setModel } = require("@/utils/userModelSelection");
+const { setModel } = require("@/utils/modelSelect");
 
 module.exports = {
   name: "model",

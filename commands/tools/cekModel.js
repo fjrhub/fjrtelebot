@@ -1,4 +1,4 @@
-const { getModelByRole, userModelSelection } = require("@/utils/userModelSelection");
+const { getModelByRole, userModelSelection } = require("@/utils/modelSelect");
 const { isAuthorized, privat } = require("@/utils/helper");
 
 module.exports = {

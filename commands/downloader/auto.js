@@ -16,7 +16,7 @@ module.exports = {
     const instagramRegex =
       /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+\/?(?:\?[^ ]*)?$/i;
     const facebookRegex =
-      /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/(?:share\/(?:r|v)\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
+      /^(?:https?:\/\/)?(?:www\.|web\.)?facebook\.com\/(?:share\/(?:r|v)\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
 
     const isTikTok = tiktokRegex.test(text);
     const isInstagram = instagramRegex.test(text);
@@ -60,11 +60,9 @@ module.exports = {
     };
 
     const handlerApi1 = async (data) => {
-      const statsOnly = `Views: ${format(data.play_count)}\nComments: ${format(
-        data.comment_count
-      )}\nShares: ${format(data.share_count)}\nDownloads: ${format(
-        data.download_count
-      )}`;
+      const statsOnly = `Views: ${data.stats?.play || "0"}\nComments: ${
+        data.stats?.comment || "0"
+      }\nShares: ${data.stats?.share || "0"}`;
 
       if (Array.isArray(data.images) && data.images.length > 0) {
         const chunks = chunkArray(data.images, 10);
@@ -81,12 +79,9 @@ module.exports = {
         return;
       }
 
-      if (data.play) {
-        const caption = `${
-          data.duration > 0 ? `Duration: ${data.duration}s\n` : ""
-        }${statsOnly}`;
-        await bot.sendVideo(chatId, data.play, {
-          caption,
+      if (data.videoUrl) {
+        await bot.sendVideo(chatId, data.videoUrl, {
+          caption: statsOnly,
           parse_mode: "Markdown",
           supports_streaming: true,
         });
@@ -178,19 +173,15 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     const fbHandler1 = async (data) => {
-      const videoUrl = data.media?.video_hd;
-      const durationMs = parseInt(data.info?.duration || "0");
-      if (!videoUrl) throw new Error("HD video is not available.");
-      const totalSeconds = Math.floor(durationMs / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      const durationText =
-        minutes > 0
-          ? `${minutes} minute${seconds > 0 ? ` ${seconds}s` : ""}`
-          : `${seconds}s`;
-      await bot.sendVideo(chatId, videoUrl, {
-        caption: "Duration: " + durationText,
-      });
+      const hdMp4Video = data.data?.find(
+        (item) => item.format === "mp4" && item.resolution === "HD"
+      );
+
+      if (!hdMp4Video?.url) {
+        throw new Error("HD MP4 video URL is not available.");
+      }
+      const videoUrl = hdMp4Video.url;
+      await bot.sendVideo(chatId, videoUrl);
     };
 
     const fbHandler2 = async (data) => {
@@ -206,35 +197,37 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     const igHandler1 = async (input, bot, chatId) => {
-      const mediaItems = Array.isArray(input)
-        ? input
-        : Array.isArray(input?.data)
-        ? input.data
-        : [];
+      const result = input?.result;
+      const urls = Array.isArray(result?.downloadUrl) ? result.downloadUrl : [];
 
-      if (mediaItems.length === 0) {
-        throw new Error("IG API 1 returned empty media array.");
+      if (urls.length === 0 || !result?.metadata) {
+        throw new Error("IG API 1 returned invalid or empty media.");
       }
 
-      const images = mediaItems.filter((i) => i.type === "image");
-      const videos = mediaItems.filter((i) => i.type === "video");
+      const isVideo = result.metadata.isVideo;
 
-      if (videos.length) {
-        await bot.sendVideo(chatId, videos[0].url);
+      if (isVideo) {
+        const videoUrl =
+          urls.find((url) => url && url.endsWith(".mp4")) || urls[0];
+        if (!videoUrl) throw new Error("No valid video URL found.");
+        await bot.sendVideo(chatId, videoUrl);
         return;
       }
 
-      if (images.length) {
-        const mediaGroup = images.slice(0, 10).map((img) => ({
-          type: "photo",
-          media: img.url,
-        }));
+      const photoUrls = urls.filter((url) => url);
 
+      if (photoUrls.length) {
+        const mediaGroup = photoUrls.slice(0, 10).map((img) => ({
+          type: "photo",
+          media: img,
+        }));
         await bot.sendMediaGroup(chatId, mediaGroup);
         return;
       }
 
-      throw new Error("IG API 1 returned unsupported media.");
+      throw new Error(
+        "IG API 1 returned unsupported media type or no valid URLs."
+      );
     };
 
     const igHandler2 = async (data) => {
@@ -303,7 +296,6 @@ Downloads: ${data.stats?.download || "?"}`;
 
         return;
       }
-
       throw new Error("IG API 3 returned unsupported media.");
     };
 
@@ -312,14 +304,19 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isFacebook) {
         const res1 = await axios.get(
-          `${process.env.flowfalcon}/download/facebook?url=${encodeURIComponent(
+          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(
             input
-          )}`,
-          { timeout: 8000 }
+          )}`
         );
-        const data1 = res1.data?.result;
-        if (!res1.data?.status || !data1)
-          throw new Error("API 1 returned an invalid response.");
+
+        const data1 = res1.data?.data;
+
+        if (!res1.data?.status || !data1 || !Array.isArray(data1.data)) {
+          throw new Error(
+            "API 1 (Siputzx - Facebook) returned an invalid response."
+          );
+        }
+
         await fbHandler1(data1);
         await deleteStatus();
         return;
@@ -327,16 +324,22 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isInstagram) {
         const res1 = await axios.get(
-          `${process.env.vapis}/api/igdl?url=${encodeURIComponent(input)}`,
+          `${
+            process.env.nekorinn
+          }/downloader/instagram?url=${encodeURIComponent(input)}`,
           { timeout: 8000 }
         );
         const data1 = res1.data;
+
         if (
           !data1?.status ||
-          !Array.isArray(data1.data) ||
-          data1.data.length === 0
+          !data1.result ||
+          !Array.isArray(data1.result.downloadUrl) ||
+          data1.result.downloadUrl.length === 0
         )
-          throw new Error("IG API 1 returned an invalid response.");
+          throw new Error(
+            "API 1 (Nekorinn - Instagram) returned an invalid response."
+          );
 
         await igHandler1(data1, bot, chatId);
         await deleteStatus();
@@ -344,14 +347,12 @@ Downloads: ${data.stats?.download || "?"}`;
       }
 
       const res1 = await axios.get(
-        `${process.env.flowfalcon}/download/tiktok?url=${encodeURIComponent(
+        `${process.env.nekorinn}/downloader/tikwm?url=${encodeURIComponent(
           input
         )}`,
         { timeout: 8000 }
       );
-      const data1 = res1.data?.result?.data;
-      if (!res1.data?.status || !data1)
-        throw new Error("TikTok API 1 returned an invalid response.");
+      const data1 = res1.data?.result;
       await handlerApi1(data1);
       await deleteStatus();
     } catch (e1) {
@@ -368,7 +369,9 @@ Downloads: ${data.stats?.download || "?"}`;
           );
           const result2 = res2.data?.result;
           if (!res2.data?.status || !result2?.media)
-            throw new Error("API 2 returned an invalid response.");
+            throw new Error(
+              "API 2 (Archive - Facebook) returned an invalid response."
+            );
           await fbHandler2(result2);
           await deleteStatus();
           return;
@@ -383,7 +386,9 @@ Downloads: ${data.stats?.download || "?"}`;
           );
           const data2 = res2.data;
           if (!data2?.status || !data2.result?.url?.length)
-            throw new Error("IG API 2 returned an invalid response.");
+            throw new Error(
+              "API 2 (Archive - Instagram) returned an invalid response."
+            );
           await igHandler2(data2);
           await deleteStatus();
           return;
@@ -397,7 +402,9 @@ Downloads: ${data.stats?.download || "?"}`;
         );
         const result2 = res2.data?.result;
         if (!res2.data?.status || !result2?.media)
-          throw new Error("TikTok API 2 returned an invalid response.");
+          throw new Error(
+            "API 2 (Archive - Tiktok) returned an invalid response."
+          );
         await handlerApi2(result2);
         await deleteStatus();
       } catch (e2) {
@@ -412,7 +419,9 @@ Downloads: ${data.stats?.download || "?"}`;
             );
             const result3 = res3.data?.data;
             if (!result3?.status || !result3?.sd_url)
-              throw new Error("API 3 returned an invalid response.");
+              throw new Error(
+                "API 3 (Vreden - Facebook) returned an invalid response."
+              );
             await fbHandler3(result3);
             await deleteStatus();
             return;
@@ -428,8 +437,9 @@ Downloads: ${data.stats?.download || "?"}`;
             const data3 = res3.data;
 
             if (data3?.status !== 200 || !data3?.result?.response?.status)
-              throw new Error("IG API 3 returned an invalid response.");
-
+              throw new Error(
+                "API 3 (Vreden - Instagram) returned an invalid response."
+              );
             await igHandler3(data3);
             await deleteStatus();
             return;
@@ -441,7 +451,9 @@ Downloads: ${data.stats?.download || "?"}`;
           );
           const result3 = res3.data?.result;
           if (!res3.data?.status || !result3)
-            throw new Error("TikTok API 3 returned an invalid response.");
+            throw new Error(
+              "API 3 (Vreden - Tiktok) returned an invalid response."
+            );
           await handlerApi3(result3);
           await deleteStatus();
         } catch (e3) {

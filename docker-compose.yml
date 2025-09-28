@@ -1,0 +1,8 @@
+services:
+  fjrtelebot:
+    container_name: fjrtelebot
+    build: .
+    image: fjrtelebot
+    env_file:
+      - .env
+    restart: unless-stopped

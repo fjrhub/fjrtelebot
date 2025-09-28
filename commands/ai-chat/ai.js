@@ -11,15 +11,22 @@ module.exports = {
   description:
     "Chat with AI using Groq (supports memory, /ai history & /ai new)",
   async execute(bot, msg) {
-    const chatId = msg.chat.id;
+    const replyChatId = msg.chat.id;
 
-    if (!isAuthorized(chatId)) return;
+    if (!isAuthorized(replyChatId)) return;
+
+    let dbChatId;
+    if (msg.chat.type === "private") {
+      dbChatId = msg.from.id;
+    } else {
+      dbChatId = `${msg.chat.id}:${msg.from.id}`;
+    }
 
     const text = msg.text?.trim();
 
     if (!text || text === "/ai") {
       return bot.sendMessage(
-        chatId,
+        replyChatId,
         `*Welcome to AI Chat*
 
 Type your question after \`/ai\`, for example:
@@ -29,54 +36,50 @@ Type your question after \`/ai\`, for example:
 • \`/ai history\` – View your previous messages  
 • \`/ai new\` – Start a new conversation
 
-_Your chat history is saved per user._`,
-        {
-          parse_mode: "Markdown",
-        }
+_Your chat history is saved per user (and per group if in a group)._`,
+        { parse_mode: "Markdown" }
       );
     }
 
-    const modelId = privat(chatId) ? 1 : 2;
+    const modelId = privat(replyChatId) ? 1 : 2;
 
     const args = text.split(" ").slice(1);
     const input = args.join(" ");
 
     if (input.toLowerCase() === "history") {
-      const history = getChatHistory(chatId);
+      const history = getChatHistory(dbChatId);
       if (!history.length) {
-        return bot.sendMessage(chatId, "There is no chat history yet.");
+        return bot.sendMessage(replyChatId, "There is no chat history yet.");
       }
-
-      const formatted = history
-        .map((h) => `(${h.role}): ${h.content}`)
-        .join("\n\n")
-        .slice(-4096);
-
-      return bot.sendMessage(chatId, formatted, { parse_mode: "Markdown" });
+      const buffer = Buffer.from(JSON.stringify(history, null, 2), "utf-8");
+      await bot.sendDocument(
+        replyChatId,
+        buffer,
+        {},
+        { filename: "history.json", contentType: "application/json" }
+      );
+      return;
     }
 
     if (input.toLowerCase() === "new") {
-      resetChat(chatId);
-      return bot.sendMessage(chatId, "The conversation has been reset.");
+      resetChat(dbChatId);
+      return bot.sendMessage(replyChatId, "The conversation has been reset.");
     }
 
     try {
-      const response = await sendMessageToGroq(chatId, input, modelId);
-      if (!response) return bot.sendMessage(chatId, "Empty reply.");
+      const response = await sendMessageToGroq(dbChatId, input, modelId);
+      if (!response) return bot.sendMessage(replyChatId, "Empty reply.");
 
       if (response.length > 4096) {
         for (let i = 0; i < response.length; i += 4096) {
-          await bot.sendMessage(chatId, response.slice(i, i + 4096));
+          await bot.sendMessage(replyChatId, response.slice(i, i + 4096));
         }
       } else {
-        bot.sendMessage(chatId, response, { parse_mode: "Markdown" });
+        bot.sendMessage(replyChatId, response, { parse_mode: "Markdown" });
       }
     } catch (err) {
       console.error("AI Error:", err);
-      bot.sendMessage(
-        chatId,
-        "An error occurred while processing the request."
-      );
+      bot.sendMessage(replyChatId, "An error occurred while processing the request.");
     }
   },
 };
