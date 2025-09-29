@@ -1,6 +1,9 @@
 const { isAutoEnabled } = require("@/utils/supabase");
 const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
+const { exec } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
 module.exports = {
   name: "auto",
@@ -329,6 +332,54 @@ Downloads: ${data.stats?.download || "?"}`;
       throw new Error("IG API 3 returned unsupported media.");
     };
 
+    async function ytDlpFallback(bot, chatId, url) {
+      const outputDir = path.resolve(__dirname, "../../yt-dlp");
+      if (!fs.existsSync(outputDir))
+        fs.mkdirSync(outputDir, { recursive: true });
+
+      const outputFile = path.join(outputDir, `video_${Date.now()}.%(ext)s`);
+      await bot.sendMessage(
+        chatId,
+        "⏳ Semua API gagal, fallback ke yt-dlp..."
+      );
+
+      return new Promise((resolve) => {
+        exec(
+          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -o "${outputFile}" "${url}"`,
+          async (error, stdout, stderr) => {
+            if (error) {
+              await bot.sendMessage(
+                chatId,
+                `❌ yt-dlp error: ${error.message}`
+              );
+              return resolve(false);
+            }
+
+            try {
+              // cari file hasil download
+              const files = fs
+                .readdirSync(outputDir)
+                .filter((f) => f.startsWith("video_"));
+              const latestFile = path.join(outputDir, files[files.length - 1]);
+
+              await bot.sendVideo(chatId, latestFile, {
+                caption: `✅ Download selesai via yt-dlp\n${url}`,
+              });
+
+              fs.unlinkSync(latestFile);
+              resolve(true);
+            } catch (err) {
+              await bot.sendMessage(
+                chatId,
+                `❌ Gagal kirim hasil yt-dlp: ${err.message}`
+              );
+              resolve(false);
+            }
+          }
+        );
+      });
+    }
+
     try {
       await sendOrEditStatus("📡 Trying API 1...");
 
@@ -494,11 +545,12 @@ Downloads: ${data.stats?.download || "?"}`;
           await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
-          await sendOrEditStatus(
-            `❌ All ${
-              isFacebook ? "Facebook" : isInstagram ? "Instagram" : "TikTok"
-            } download APIs failed.`
-          );
+          await sendOrEditStatus(`⚠️ Semua API gagal. Fallback ke yt-dlp...`);
+
+          // fallback ke yt-dlp
+          await ytDlpFallback(bot, chatId, input);
+
+          await deleteStatus();
         }
       }
     }
