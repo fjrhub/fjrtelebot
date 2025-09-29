@@ -11,7 +11,7 @@ const {
 
 module.exports = {
   name: "status",
-  description: "Show bot status including uptime, memory, system, platform, and ping",
+  description: "Show bot status including uptime, memory, system, and platform",
 
   getCPUInfo() {
     try {
@@ -54,20 +54,7 @@ module.exports = {
     }
   },
 
-getPing(host = "8.8.8.8", count = 3) {
-  try {
-    const output = execSync(`ping -c ${count} -w ${count} ${host}`).toString();
-    const matches = [...output.matchAll(/time=([\d.]+) ms/g)].map(m => m[1]);
-    if (matches.length > 0) {
-      return matches.map((t, i) => `${t} ms`).join(", ");
-    }
-    return "Timeout";
-  } catch {
-    return "Unreachable";
-  }
-},
-
-  async execute(bot, msg) {
+  execute(bot, msg) {
     const chatId = msg.chat.id;
 
     if (
@@ -87,10 +74,7 @@ getPing(host = "8.8.8.8", count = 3) {
     const totalCpuMs = (cpuUsage.user + cpuUsage.system) / 1000;
     const cpuPercent = ((totalCpuMs / (elapsedSec * 1000)) * 100).toFixed(2);
 
-    const pingResult = this.getPing("8.8.8.8");
-
     const message = `BOT STATUS
-• Ping: ${pingResult}
 • Bot Uptime: ${uptime}
 • System Uptime: ${formatTime(os.uptime())}
 • Node.js: ${process.version}
@@ -101,9 +85,8 @@ getPing(host = "8.8.8.8", count = 3) {
 • RSS: ${formatBytes(mem.rss)}
 • Heap: ${formatBytes(mem.heapUsed)} / ${formatBytes(mem.heapTotal)}
 `;
-
     try {
-      await bot.sendMessage(chatId, message);
+      bot.sendMessage(chatId, message);
     } catch (err) {
       console.error("Failed to send status:", err);
     }
