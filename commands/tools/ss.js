@@ -12,10 +12,13 @@ module.exports = {
     if (!input) {
       return bot.sendMessage(
         chatId,
-        "❌ Please provide a website URL.\n\nExample: `ss https://example.com`",
+        "❌ Please provide a website URL.\n\nExample: ss https://example.com",
         { parse_mode: "Markdown" }
       );
     }
+
+    // Auto delete input message
+    await bot.deleteMessage(chatId, msg.message_id);
 
     let statusMessage = null;
 
@@ -45,7 +48,7 @@ module.exports = {
     const screenshotVreden = async (url) => {
       const apiUrl = `${process.env.vreden}/api/ssweb?url=${encodeURIComponent(url)}&type=tablet`;
       const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
-      if (!res.data) throw new Error("API 1 returned empty data.");
+      if (!res.data) throw new Error("API1 returned empty data.");
       return res.data;
     };
 
@@ -55,27 +58,27 @@ module.exports = {
       }
       const apiUrl = `${process.env.FAST}/tool/screenshot?url=${encodeURIComponent(url)}&width=1280&height=800&delay=0&fullPage=false&darkMode=false&type=png`;
       const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
-      if (!res.data) throw new Error("API 2 returned empty data.");
+      if (!res.data) throw new Error("API2 returned empty data.");
       return res.data;
     };
 
     try {
-      await sendOrEditStatus("📡 Trying API 1 (Vreden)...");
+      await sendOrEditStatus("📡 Trying API1 (Vreden)...");
       const buffer1 = await screenshotVreden(input);
       await handleScreenshot(buffer1);
       await deleteStatus();
       console.log("✅ Primary API (Vreden) success");
     } catch (err1) {
-      console.error("❌ API 1 failed:", err1.message);
+      console.error("❌ API1 failed:", err1.message);
 
       try {
-        await sendOrEditStatus("📡 Trying API 2 (FAST)...");
+        await sendOrEditStatus("📡 Trying API2 (FAST)...");
         const buffer2 = await screenshotFast(input);
         await handleScreenshot(buffer2);
         await deleteStatus();
         console.log("✅ Fallback API (FAST) success");
       } catch (err2) {
-        console.error("❌ API 2 failed:", err2.message);
+        console.error("❌ API2 failed:", err2.message);
         await sendOrEditStatus("❌ Failed to take screenshot from both APIs.");
       }
     }
