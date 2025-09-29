@@ -3,16 +3,12 @@ const allowedChatId = process.env.GC
   .split(',')
   .map(id => Number(id.trim()));
 
-const OWNER_ID = allowedChatId[1];
-const GROUP_ID = allowedChatId[0];
+const OWNER_ID = allowedChatId[0];
 
-const PRIVATE = process.env.PRIVATE;
+const privat = (chatId) => Number(chatId) === OWNER_ID;
 
 // Check if chatId is among the allowed ones
 const isAuthorized = (chatId) => allowedChatId.includes(Number(chatId));
-
-// Check if chatId is the same as the private ID from the API
-const privat = (chatId) => chatId.toString() === PRIVATE;
 
 // Time format to WIB
 const getWIBTime = () => {
@@ -91,7 +87,6 @@ function formatTime(seconds) {
 
 module.exports = {
   OWNER_ID,
-  GROUP_ID,
   isAuthorized,
   privat,
   getWIBTime,
