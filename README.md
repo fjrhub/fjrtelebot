@@ -66,8 +66,7 @@ pnpm start
 | Command           | Description                         |
 |-------------------|-------------------------------------|
 | `/ai <prompt>`    | Ask anything to AI                  |
-| `/auto_on`        | Enable auto-reply mode              |
-| `/auto_off`       | Disable auto-reply mode             |
+| `/settings`       | Manage auto mode (`on` / `off`)     |
 | `/waifu`          | Send a random waifu image           |
 | `/sholat`         | Show prayer times                   |
 | `/balance`        | Display user balance                |
