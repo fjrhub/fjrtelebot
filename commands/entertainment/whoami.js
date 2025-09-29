@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { isAuthorized } = require("@/utils/helper");
 
 // store active games per chat
 const activeGames = {};
@@ -9,6 +10,7 @@ module.exports = {
   async execute(bot, msg) {
     const chatId = msg.chat.id;
     const text = (msg.text || "").trim().toLowerCase();
+    if (!isAuthorized(chatId)) return;
 
     // 🔑 handle surrender directly (skip creating new game)
     if (text === "/whoami surrender") {
