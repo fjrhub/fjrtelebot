@@ -49,21 +49,40 @@ _Your chat history is saved per user (and per group if in a group)._`,
     if (input.toLowerCase() === "history") {
       const history = getChatHistory(dbChatId);
       if (!history.length) {
-        return bot.sendMessage(replyChatId, "There is no chat history yet.");
+        await bot.sendMessage(replyChatId, "There is no chat history yet.");
+      } else {
+        const buffer = Buffer.from(JSON.stringify(history, null, 2), "utf-8");
+        await bot.sendDocument(
+          replyChatId,
+          buffer,
+          {},
+          { filename: "history.json", contentType: "application/json" }
+        );
       }
-      const buffer = Buffer.from(JSON.stringify(history, null, 2), "utf-8");
-      await bot.sendDocument(
-        replyChatId,
-        buffer,
-        {},
-        { filename: "history.json", contentType: "application/json" }
-      );
+
+      setTimeout(() => {
+        bot.deleteMessage(replyChatId, msg.message_id).catch(() => {});
+      }, 1000);
+
       return;
     }
 
     if (input.toLowerCase() === "new") {
       resetChat(dbChatId);
-      return bot.sendMessage(replyChatId, "The conversation has been reset.");
+      const sentMsg = await bot.sendMessage(
+        replyChatId,
+        "The conversation has been reset."
+      );
+
+      setTimeout(() => {
+        bot.deleteMessage(replyChatId, msg.message_id).catch(() => {});
+      }, 1000);
+
+      setTimeout(() => {
+        bot.deleteMessage(replyChatId, sentMsg.message_id).catch(() => {});
+      }, 5000);
+
+      return;
     }
 
     try {
