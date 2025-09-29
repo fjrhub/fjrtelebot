@@ -62,11 +62,9 @@ const message = `🤖 BOT STATUS
 • System Uptime: ${formatTime(os.uptime())}
 • Node.js: ${process.version}
 • Platform: ${getPrettyOS()}
-• Bot Version: ${pkg.version}
 • CPU: ${os.cpus()[0].model} (${os.cpus().length} cores)
 • CPU Usage: ${cpuPercent}%
-• RAM Total: ${formatBytes(os.totalmem())}
-• RAM Free: ${formatBytes(os.freemem())}
+• RAM: ${formatBytes(os.freemem())} / ${formatBytes(os.totalmem())}
 • RSS: ${formatBytes(mem.rss)}
 • Heap Total: ${formatBytes(mem.heapTotal)}
 • Heap Used: ${formatBytes(mem.heapUsed)}
