@@ -57,7 +57,7 @@ module.exports = {
       }
     }
 
-const message = `🤖 BOT STATUS
+const message = `BOT STATUS
 • Bot Uptime: ${uptime}
 • System Uptime: ${formatTime(os.uptime())}
 • Node.js: ${process.version}
@@ -66,9 +66,7 @@ const message = `🤖 BOT STATUS
 • CPU Usage: ${cpuPercent}%
 • RAM: ${formatBytes(os.freemem())} / ${formatBytes(os.totalmem())}
 • RSS: ${formatBytes(mem.rss)}
-• Heap Total: ${formatBytes(mem.heapTotal)}
-• Heap Used: ${formatBytes(mem.heapUsed)}
-• External: ${formatBytes(mem.external)}
+• Heap: ${formatBytes(mem.heapUsed)} / ${formatBytes(mem.heapTotal)}
 `;
     try {
       bot.sendMessage(chatId, message);
