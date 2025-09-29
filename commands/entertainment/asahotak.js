@@ -1,8 +1,8 @@
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
 
-// store active asahotak games per chat
-const activeAsahotak = {};
+// store active brain teaser games per chat
+const activeBrainTeaser = {};
 
 module.exports = {
   name: "asahotak",
@@ -12,28 +12,28 @@ module.exports = {
     const text = (msg.text || "").trim().toLowerCase();
     if (!isAuthorized(chatId)) return;
 
-    // 🔑 surrender handler
+    // 🔑 handle surrender
     if (text === "/asahotak surrender") {
-      if (!activeAsahotak[chatId]) {
-        return bot.sendMessage(chatId, "⚠️ Tidak ada game Asah Otak yang sedang berjalan.");
+      if (!activeBrainTeaser[chatId]) {
+        return bot.sendMessage(chatId, "⚠️ No Brain Teaser game is currently running in this chat.");
       }
 
-      const { answer } = activeAsahotak[chatId];
+      const { answer } = activeBrainTeaser[chatId];
       await bot.sendMessage(
         chatId,
-        `🏳️ Game berakhir. Jawaban yang benar adalah *${answer}*`,
+        `🏳️ Game ended. The correct answer was *${answer}*`,
         { parse_mode: "Markdown" }
       );
 
-      delete activeAsahotak[chatId];
+      delete activeBrainTeaser[chatId];
       return;
     }
 
-    // jika sudah ada game berjalan
-    if (activeAsahotak[chatId]) {
+    // prevent multiple games in the same chat
+    if (activeBrainTeaser[chatId]) {
       return bot.sendMessage(
         chatId,
-        "⚠️ Game Asah Otak sudah berjalan di chat ini. Selesaikan dulu atau surrender."
+        "⚠️ A Brain Teaser game is already running in this chat. Please finish it or surrender first."
       );
     }
 
@@ -48,11 +48,11 @@ module.exports = {
         const question = result.data.soal;
         const answer = result.data.jawaban;
 
-        activeAsahotak[chatId] = { answer };
+        activeBrainTeaser[chatId] = { answer };
 
         await bot.sendMessage(chatId, question, { parse_mode: "Markdown" });
 
-        // listener jawaban
+        // listener for answers
         const listener = async (answerMsg) => {
           if (answerMsg.chat.id !== chatId) return;
           if (!answerMsg.text) return;
@@ -63,22 +63,22 @@ module.exports = {
           if (userAnswer === correctAnswer) {
             await bot.sendMessage(
               chatId,
-              `✅ Benar! ${answerMsg.from.first_name} menjawab dengan tepat!\nJawabannya adalah *${answer}*`,
+              `✅ Correct! ${answerMsg.from.first_name} got it right!\nThe answer is *${answer}*`,
               { parse_mode: "Markdown" }
             );
 
-            delete activeAsahotak[chatId];
+            delete activeBrainTeaser[chatId];
             bot.removeListener("message", listener);
           }
         };
 
         bot.on("message", listener);
       } else {
-        bot.sendMessage(chatId, "⚠️ Gagal mengambil soal dari API Asah Otak.");
+        bot.sendMessage(chatId, "⚠️ Failed to fetch Brain Teaser question from the API.");
       }
     } catch (error) {
-      console.error("Asah Otak Error:", error.message);
-      bot.sendMessage(chatId, "❌ Terjadi kesalahan saat mengambil soal.");
+      console.error("Brain Teaser Error:", error.message);
+      bot.sendMessage(chatId, "❌ An error occurred while fetching the question.");
     }
   },
 };
