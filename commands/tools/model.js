@@ -42,7 +42,7 @@ module.exports = {
       );
     }
 
-    await bot.sendMessage(
+    const sentMsg = await bot.sendMessage(
       chatId,
       `🔧 *Choose the model you want to use:*\n\n${listText}`,
       {
@@ -52,6 +52,14 @@ module.exports = {
         },
       }
     );
+
+    setTimeout(() => {
+      bot.deleteMessage(chatId, msg.message_id).catch(() => {});
+    }, 1000);
+
+    setTimeout(() => {
+      bot.deleteMessage(chatId, sentMsg.message_id).catch(() => {});
+    }, 30000);
   },
 
   async handleCallback(bot, query) {
@@ -62,20 +70,34 @@ module.exports = {
     const role = privat(chatId) ? "privat" : "authorized";
 
     try {
-      setModel(role, modelId);
-      await bot.sendMessage(
+      const sentMsg = await bot.sendMessage(
         chatId,
         `✅ Model for *${role}* updated to:\n*${modelId}*`,
         {
           parse_mode: "Markdown",
         }
       );
+
+      setTimeout(() => {
+        bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+      }, 1000);
+
+      setTimeout(() => {
+        bot.deleteMessage(chatId, sentMsg.message_id).catch(() => {});
+      }, 30000);
+
+      setModel(role, modelId);
     } catch (error) {
-      await bot.sendMessage(
+      const errMsg = await bot.sendMessage(
         chatId,
         `❌ Failed to update model: ${error.message}`
       );
+
+      setTimeout(() => {
+        bot.deleteMessage(chatId, errMsg.message_id).catch(() => {});
+      }, 30000);
     }
+
     await bot.answerCallbackQuery(query.id);
   },
 };
