@@ -3,7 +3,7 @@ const axios = require("axios");
 
 module.exports = {
   name: "ss",
-  description: "Take website screenshot using Vreden API (with fallback to FAST)",
+  description: "Take website screenshot using Vreden API (with fallback to DIIOFFC)",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
     if (!isAuthorized(chatId)) return;
@@ -46,17 +46,17 @@ module.exports = {
     };
 
     const screenshotVreden = async (url) => {
-      const apiUrl = `${process.env.vreden}/api/ssweb?url=${encodeURIComponent(url)}&type=tablet`;
+      const apiUrl = `${process.env.a}/api/ssweb?url=${encodeURIComponent(url)}&type=tablet`;
       const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
       if (!res.data) throw new Error("API1 returned empty data.");
       return res.data;
     };
 
-    const screenshotFast = async (url) => {
+    const screenshotDiioffc = async (url) => {
       if (!/^https?:\/\//i.test(url)) {
         url = `https://${url}`;
       }
-      const apiUrl = `${process.env.FAST}/tool/screenshot?url=${encodeURIComponent(url)}&width=1280&height=800&delay=0&fullPage=false&darkMode=false&type=png`;
+      const apiUrl = `${process.env.diioffc}/api/tools/sspc?url=${encodeURIComponent(url)}`;
       const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
       if (!res.data) throw new Error("API2 returned empty data.");
       return res.data;
@@ -72,11 +72,11 @@ module.exports = {
       console.error("❌ API1 failed:", err1.message);
 
       try {
-        await sendOrEditStatus("📡 Trying API2 (FAST)...");
-        const buffer2 = await screenshotFast(input);
+        await sendOrEditStatus("📡 Trying API2 (DIIOFFC)...");
+        const buffer2 = await screenshotDiioffc(input);
         await handleScreenshot(buffer2);
         await deleteStatus();
-        console.log("✅ Fallback API (FAST) success");
+        console.log("✅ Fallback API (DIIOFFC) success");
       } catch (err2) {
         console.error("❌ API2 failed:", err2.message);
         await sendOrEditStatus("❌ Failed to take screenshot from both APIs.");
