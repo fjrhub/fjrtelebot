@@ -17,7 +17,7 @@ async function insertBalance(amount, information, wallet) {
   if (selectError) return { error: selectError };
 
   const { error: transactionError } = await supabase
-    .from("transaction")
+    .from("transactions")
     .insert([{ amount, information, wallet }]);
 
   if (transactionError) return { error: transactionError };
@@ -76,7 +76,7 @@ async function getTransactions({ wallet, month, page = 1, limit = 15 }) {
 
   // If it's not in the cache, take it from Supabase
   let query = supabase
-    .from("transaction")
+    .from("transactions")
     .select("*")
     .order("date", { ascending: true });
 
@@ -105,7 +105,7 @@ async function getTransactions({ wallet, month, page = 1, limit = 15 }) {
 async function updateTransactionAndBalance(id, newAmount, newInfo) {
   // Get old transaction
   const { data: oldTx, error: getErr } = await supabase
-    .from("transaction")
+    .from("transactions")
     .select("*")
     .eq("id", id)
     .single();
@@ -120,7 +120,7 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
 
   // Update the transaction
   const { error: updateTxError } = await supabase
-    .from("transaction")
+    .from("transactions")
     .update({
       amount: newAmount,
       information: newInfo,
@@ -129,7 +129,7 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
     .eq("id", id);
 
   if (updateTxError) {
-    return { error: `Failed to update transaction: ${updateTxError.message}` };
+    return { error: `Failed to update transactions: ${updateTxError.message}` };
   }
 
   // Get current balance
