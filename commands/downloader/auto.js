@@ -332,6 +332,7 @@ Downloads: ${data.stats?.download || "?"}`;
       throw new Error("IG API 3 returned unsupported media.");
     };
 
+    // helper fallback
     async function ytDlpFallback(bot, chatId, url) {
       const outputDir = path.resolve(__dirname, "../../yt-dlp");
       if (!fs.existsSync(outputDir))
@@ -341,8 +342,8 @@ Downloads: ${data.stats?.download || "?"}`;
 
       return new Promise((resolve) => {
         exec(
-          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -o "${outputFile}" "${url}"`,
-          async (error, stdout, stderr) => {
+          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${outputFile}" "${url}"`,
+          async (error) => {
             if (error) {
               await bot.sendMessage(
                 chatId,
@@ -356,13 +357,44 @@ Downloads: ${data.stats?.download || "?"}`;
               const files = fs
                 .readdirSync(outputDir)
                 .filter((f) => f.startsWith("video_"));
-              const latestFile = path.join(outputDir, files[files.length - 1]);
+              const latestFile = path.join(
+                outputDir,
+                files.find((f) => f.endsWith(".mp4"))
+              );
+              const thumbFile = path.join(
+                outputDir,
+                files.find((f) => f.match(/\.(jpg|png)$/))
+              );
 
+              let finalThumb = undefined;
+              if (thumbFile && fs.existsSync(thumbFile)) {
+                const resizedThumb = path.join(
+                  outputDir,
+                  `thumb_${Date.now()}.jpg`
+                );
+                // resize thumbnail max 320x320
+                await new Promise((res) => {
+                  exec(
+                    `ffmpeg -y -i "${thumbFile}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${resizedThumb}"`,
+                    () => res()
+                  );
+                });
+                finalThumb = resizedThumb;
+              }
+
+              // kirim video dengan preview
               await bot.sendVideo(chatId, latestFile, {
                 caption: `✅ Download selesai via yt-dlp\n${url}`,
+                thumb: finalThumb,
               });
 
+              // hapus file setelah kirim
               fs.unlinkSync(latestFile);
+              if (thumbFile && fs.existsSync(thumbFile))
+                fs.unlinkSync(thumbFile);
+              if (finalThumb && fs.existsSync(finalThumb))
+                fs.unlinkSync(finalThumb);
+
               resolve(true);
             } catch (err) {
               await bot.sendMessage(
@@ -381,9 +413,7 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isFacebook) {
         const res1 = await axios.get(
-          `${process.env.a}/api/d/facebook?url=${encodeURIComponent(
-            input
-          )}`
+          `${process.env.a}/api/d/facebook?url=${encodeURIComponent(input)}`
         );
 
         const data1 = res1.data?.data;
@@ -401,9 +431,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isInstagram) {
         const res1 = await axios.get(
-          `${
-            process.env.a
-          }/api/download/instagram?url=${encodeURIComponent(input)}`,
+          `${process.env.a}/api/download/instagram?url=${encodeURIComponent(
+            input
+          )}`,
           { timeout: 8000 }
         );
         const data1 = res1.data;
@@ -424,9 +454,7 @@ Downloads: ${data.stats?.download || "?"}`;
       }
 
       const res1 = await axios.get(
-        `${process.env.a}/api/download/tiktok?url=${encodeURIComponent(
-          input
-        )}`
+        `${process.env.a}/api/download/tiktok?url=${encodeURIComponent(input)}`
       );
       const data1 = res1.data?.result;
       if (!res1.data?.status || !data1) {
@@ -445,9 +473,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
         if (isFacebook) {
           const res2 = await axios.get(
-            `${
-              process.env.a
-            }/api/download/facebook?url=${encodeURIComponent(input)}`,
+            `${process.env.a}/api/download/facebook?url=${encodeURIComponent(
+              input
+            )}`,
             { timeout: 8000 }
           );
           const result2 = res2.data?.result;
@@ -462,9 +490,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
         if (isInstagram) {
           const res2 = await axios.get(
-            `${
-              process.env.a
-            }/api/download/instagram?url=${encodeURIComponent(input)}`,
+            `${process.env.a}/api/download/instagram?url=${encodeURIComponent(
+              input
+            )}`,
             { timeout: 8000 }
           );
           const data2 = res2.data;
