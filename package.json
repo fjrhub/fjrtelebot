@@ -9,7 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.16.1",
+  "packageManager": "pnpm@10.17.0",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
     "axios": "^1.10.0",
