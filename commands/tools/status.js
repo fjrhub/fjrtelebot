@@ -54,16 +54,18 @@ module.exports = {
     }
   },
 
-  getPing(host = "8.8.8.8") {
-    try {
-      const output = execSync(`ping -c 1 -w 1 ${host}`).toString();
-      const match = output.match(/time=([\d.]+) ms/);
-      if (match) return `${match[1]} ms`;
-      return "Timeout";
-    } catch {
-      return "Unreachable";
+getPing(host = "8.8.8.8", count = 3) {
+  try {
+    const output = execSync(`ping -c ${count} -w ${count} ${host}`).toString();
+    const matches = [...output.matchAll(/time=([\d.]+) ms/g)].map(m => m[1]);
+    if (matches.length > 0) {
+      return matches.map((t, i) => `${t} ms`).join(", ");
     }
-  },
+    return "Timeout";
+  } catch {
+    return "Unreachable";
+  }
+},
 
   async execute(bot, msg) {
     const chatId = msg.chat.id;
