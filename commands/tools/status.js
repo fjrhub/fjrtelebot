@@ -1,14 +1,24 @@
 const fs = require("fs");
 const os = require("os");
 const { execSync } = require("child_process");
-const { privat, getUptime, formatBytes } = require("@/utils/helper");
+const { privat, isAuthorized, getUptime, formatBytes, } = require("@/utils/helper");
 
 module.exports = {
   name: "status",
   description: "Show bot status including uptime, memory, and platform",
   execute(bot, msg) {
     const chatId = msg.chat.id;
-    if (!privat(chatId)) return;
+    const fromId = msg.from?.id;
+    const chatType = msg.chat.type;
+
+    if (
+      !(
+        (msg.chat.type === "private" && privat(msg.chat.id)) ||
+        (msg.chat.type !== "private" &&
+          (privat(msg.from.id) || isAuthorized(msg.from.id)))
+      )
+    )
+      return;
 
     const uptime = getUptime();
     const mem = process.memoryUsage();
