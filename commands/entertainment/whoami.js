@@ -31,7 +31,7 @@ module.exports = {
     if (activeGames[chatId]) {
       return bot.sendMessage(
         chatId,
-        "⚠️ A game is already running in this chat. Please finish it first or type /whoami surrender."
+        "⚠️ A game is already running in this chat."
       );
     }
 
@@ -51,7 +51,7 @@ module.exports = {
 
         await bot.sendMessage(
           chatId,
-          `🤔 *Who Am I?*\n\n${question}\n\nEveryone can type your guess in this chat!\n\nType /whoami surrender to give up.`,
+          question,
           { parse_mode: "Markdown" }
         );
 
