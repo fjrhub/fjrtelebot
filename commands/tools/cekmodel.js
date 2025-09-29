@@ -6,6 +6,14 @@ module.exports = {
   description: "Check which model is currently in use by your role",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
+    const messageId = msg.message_id;
+    setTimeout(async () => {
+      try {
+        await bot.deleteMessage(chatId, messageId);
+      } catch (err) {
+        console.error("Failed to delete user message:", err.message);
+      }
+    }, 1000);
 
     if (!isAuthorized(chatId)) return;
 
@@ -23,7 +31,6 @@ module.exports = {
       );
     }
 
-    // If it's just an ordinary authorized
     const model = getModelByRole(chatId) || "Not set";
     return bot.sendMessage(chatId,
       `🔍 Current model for *authorized* users:\n*${model}*`,
