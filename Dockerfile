@@ -1,8 +1,8 @@
 # Use the official Node.js 22 slim image
 FROM node:22-slim
 
-# Enable pnpm using Corepack dan set ke versi 10.13.1
-RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
+# Enable pnpm using Corepack
+RUN corepack enable && corepack prepare pnpm@10.16.0 --activate
 
 # Set working directory inside the container
 WORKDIR /app
