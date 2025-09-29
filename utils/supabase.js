@@ -189,26 +189,26 @@ async function isAutoEnabled(userId) {
     const isExpired = Date.now() - timestamp > CACHE_TTL1;
 
     if (!isExpired) {
-      console.log(`[CACHE HIT] Auto status for user ${userId}: ${value}`);
+      // console.log(`[CACHE HIT] Auto status for user ${userId}: ${value}`);
       return value;
     }
 
-    console.log(
-      `[CACHE EXPIRED] Auto status for user ${userId}. Fetching from Supabase...`
-    );
+    // console.log(
+    //   `[CACHE EXPIRED] Auto status for user ${userId}. Fetching from Supabase...`
+    // );
     autoStatusCache.delete(userId);
   }
 
   // 🚦 Check if there is already a query for this userId
   if (inFlightRequests.has(userId)) {
-    console.log(`[WAIT] Request already in flight for user ${userId}`);
+    // console.log(`[WAIT] Request already in flight for user ${userId}`);
     return inFlightRequests.get(userId);
   }
 
   // 🔍 New query to Supabase
-  console.log(
-    `[DB QUERY] Fetching auto status for user ${userId} from Supabase...`
-  );
+  // console.log(
+  //   `[DB QUERY] Fetching auto status for user ${userId} from Supabase...`
+  // );
   const promise = (async () => {
     const { data, error } = await supabase
       .from("auto_status")
@@ -219,11 +219,11 @@ async function isAutoEnabled(userId) {
     let isActive;
     if (!error && data) {
       isActive = Number(data.status) === 1;
-      console.log(`[DB RESULT] Auto status for user ${userId}: ${isActive}`);
+      // console.log(`[DB RESULT] Auto status for user ${userId}: ${isActive}`);
     } else {
-      console.log(
-        `[DB INSERT] No record found for user ${userId}, setting default status = true`
-      );
+      // console.log(
+      //   `[DB INSERT] No record found for user ${userId}, setting default status = true`
+      // );
       await setAutoStatus(userId, true);
       isActive = true;
     }
@@ -245,15 +245,15 @@ async function isAutoEnabled(userId) {
 
 // ✅ Update status in Supabase and cache
 async function setAutoStatus(userId, status) {
-  console.log(
-    `[DB UPSERT] Updating auto status for user ${userId} → ${status}`
-  );
+  // console.log(
+  //   `[DB UPSERT] Updating auto status for user ${userId} → ${status}`
+  // );
   await supabase.from("auto_status").upsert({
     id: userId,
     status: status ? 1 : 0,
   });
 
-  console.log(`[CACHE UPDATE] Auto status for user ${userId} set to ${status}`);
+//   console.log(`[CACHE UPDATE] Auto status for user ${userId} set to ${status}`);
   autoStatusCache.set(userId, { value: !!status, timestamp: Date.now() });
 }
 
