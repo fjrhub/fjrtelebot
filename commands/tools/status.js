@@ -13,6 +13,48 @@ const {
 module.exports = {
   name: "status",
   description: "Show bot status including uptime, memory, system, and platform",
+
+  getCPUInfo() {
+    try {
+      const cpus = os.cpus();
+      if (cpus && cpus.length > 0 && cpus[0].model) {
+        return `${cpus[0].model} (${cpus.length} cores @ ${cpus[0].speed}MHz)`;
+      }
+
+      const socModel = execSync("getprop ro.soc.model").toString().trim();
+      const platform = execSync("getprop ro.board.platform").toString().trim();
+      const hardware = execSync("getprop ro.hardware").toString().trim();
+
+      return `${socModel || "Unknown SoC"} (${hardware || "?"}, ${
+        platform || "?"
+      })`;
+    } catch {
+      return "Unknown CPU";
+    }
+  },
+
+  getPrettyOS() {
+    try {
+      if (fs.existsSync("/etc/os-release")) {
+        const data = fs.readFileSync("/etc/os-release", "utf8");
+        const pretty = data.match(/PRETTY_NAME="(.+)"/);
+        if (pretty) return `${pretty[1]} (${os.arch()})`;
+      }
+
+      try {
+        const release = execSync("getprop ro.build.version.release")
+          .toString()
+          .trim();
+        const arch = execSync("getprop ro.product.cpu.abi").toString().trim();
+        if (release) return `Android ${release} (${arch})`;
+      } catch (_) {}
+
+      return `${os.type()} ${os.release()} (${os.arch()})`;
+    } catch {
+      return `${os.type()} ${os.release()} (${os.arch()})`;
+    }
+  },
+
   execute(bot, msg) {
     const chatId = msg.chat.id;
 
@@ -33,36 +75,12 @@ module.exports = {
     const totalCpuMs = (cpuUsage.user + cpuUsage.system) / 1000;
     const cpuPercent = ((totalCpuMs / (elapsedSec * 1000)) * 100).toFixed(2);
 
-    function getPrettyOS() {
-      try {
-        if (fs.existsSync("/etc/os-release")) {
-          const data = fs.readFileSync("/etc/os-release", "utf8");
-          const pretty = data.match(/PRETTY_NAME="(.+)"/);
-          if (pretty) return `${pretty[1]} (${os.arch()})`;
-        }
-
-        try {
-          const release = execSync("getprop ro.build.version.release")
-            .toString()
-            .trim();
-          const arch = execSync("getprop ro.product.cpu.abi")
-            .toString()
-            .trim();
-          if (release) return `Android ${release} (${arch})`;
-        } catch (_) {}
-
-        return `${os.type()} ${os.release()} (${os.arch()})`;
-      } catch (e) {
-        return `${os.type()} ${os.release()} (${os.arch()})`;
-      }
-    }
-
-const message = `BOT STATUS
+    const message = `BOT STATUS
 • Bot Uptime: ${uptime}
 • System Uptime: ${formatTime(os.uptime())}
 • Node.js: ${process.version}
-• Platform: ${getPrettyOS()}
-• CPU: ${os.cpus()[0].model} (${os.cpus().length} cores)
+• Platform: ${this.getPrettyOS()}
+• CPU: ${this.getCPUInfo()}
 • CPU Usage: ${cpuPercent}%
 • RAM: ${formatBytes(os.freemem())} / ${formatBytes(os.totalmem())}
 • RSS: ${formatBytes(mem.rss)}
