@@ -257,6 +257,86 @@ async function setAutoStatus(userId, status) {
   autoStatusCache.set(userId, { value: !!status, timestamp: Date.now() });
 }
 
+async function updateFJL(pengeluaran, pemasukan, information) {
+  // Ambil balance yang sudah ada
+  const { data: balances, error: selectError } = await supabase
+    .from("balance")
+    .select("wallet, amount")
+    .in("wallet", ["FJLCASH", "FJLSALDO", "FJLPROFIT", "DOMPET"]);
+
+  if (selectError) return { error: selectError };
+
+  // Cari nilai lama
+  const fjlcash = balances.find(b => b.wallet === "FJLCASH")?.amount;
+  const fjlsaldo = balances.find(b => b.wallet === "FJLSALDO")?.amount;
+  const fjlprofit = balances.find(b => b.wallet === "FJLPROFIT")?.amount;
+  const dompet = balances.find(b => b.wallet === "DOMPET")?.amount;
+
+  // Kalau ada yang null/undefined -> cancel update
+  if (
+    fjlcash === undefined ||
+    fjlsaldo === undefined ||
+    fjlprofit === undefined ||
+    dompet === undefined
+  ) {
+    return { 
+      error: "Data balance tidak lengkap. Update dibatalkan.",
+      balances 
+    };
+  }
+
+  console.log("Nilai lama:");
+  console.log("FJLCASH:", fjlcash);
+  console.log("FJLSALDO:", fjlsaldo);
+  console.log("FJLPROFIT:", fjlprofit);
+  console.log("DOMPET:", dompet);
+
+  // Hitung perubahan
+  const newFjlcash = fjlcash + pemasukan;
+  const newFjlsaldo = fjlsaldo - pengeluaran;
+  const newProfit = fjlprofit + (pemasukan - pengeluaran);
+  const newDompet = dompet + pemasukan;
+
+  console.log("Nilai baru:");
+  console.log("FJLCASH:", newFjlcash);
+  console.log("FJLSALDO:", newFjlsaldo);
+  console.log("FJLPROFIT:", newProfit);
+  console.log("DOMPET:", newDompet);
+
+  // Update balance
+  const updates = [
+    { wallet: "FJLCASH", amount: newFjlcash },
+    { wallet: "FJLSALDO", amount: newFjlsaldo },
+    { wallet: "FJLPROFIT", amount: newProfit },
+    { wallet: "DOMPET", amount: newDompet },
+  ];
+
+  for (const u of updates) {
+    const { error } = await supabase
+      .from("balance")
+      .update({ amount: u.amount })
+      .eq("wallet", u.wallet);
+    if (error) return { error };
+  }
+
+  // Insert transaction hanya untuk DOMPET
+  const { error: trxError } = await supabase
+    .from("transaction")
+    .insert([
+      { amount: pemasukan, information, wallet: "DOMPET" }
+    ]);
+
+  if (trxError) return { error: trxError };
+
+  return { 
+    error: null, 
+    newFjlcash, 
+    newFjlsaldo, 
+    newProfit, 
+    newDompet 
+  };
+}
+
 module.exports = {
   supabase,
   insertBalance,
@@ -267,4 +347,5 @@ module.exports = {
   preloadAutoStatus,
   isAutoEnabled,
   setAutoStatus,
+  updateFJL
 };
