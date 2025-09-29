@@ -395,7 +395,6 @@ Downloads: ${data.stats?.download || "?"}`;
 
               // kirim video (dengan atau tanpa thumbnail)
               await bot.sendVideo(chatId, latestFile, {
-                caption: `✅ Download selesai via yt-dlp\n${url}`,
                 ...(finalThumb ? { thumb: finalThumb } : {}),
               });
 
