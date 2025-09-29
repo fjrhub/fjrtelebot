@@ -8,7 +8,6 @@ A Node.js-based Telegram bot with multifunctional features including AI chat, me
 - ⬇️ **Downloader** — Download media from multiple sources.
 - 🕹️ **Entertainment** — Fun commands like `/waifu`.
 - 💰 **Savings** — Add, view, and edit user balance.
-- 🔍 **Search** — Search features like DuckDuckGo queries.
 - 🛠️ **Tools** — Utilities like ping, prayer times, screenshots, etc.
 
 ## 📁 Directory Structure
@@ -20,13 +19,12 @@ fjrtelebot/
 │   ├── downloader/
 │   ├── entertainment/
 │   ├── savings/
-│   ├── search/
 │   └── tools/
 ├── utils/
 │   ├── groq.js
 │   ├── helper.js
 │   ├── supabase.js
-│   └── userModelSelection.js
+│   └── modelSelect.js
 ├── .env.example
 ├── handler.js
 ├── index.js
