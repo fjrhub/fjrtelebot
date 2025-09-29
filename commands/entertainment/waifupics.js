@@ -1,4 +1,4 @@
-const { privat } = require("@/utils/helper");
+const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
 
 module.exports = {
@@ -6,7 +6,7 @@ module.exports = {
   description: "Get a random waifu image from the API waifupics",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
-    if (!privat(chatId)) return;
+    if (!isAuthorized(chatId)) return;
     try {
       const response = await axios.get(`${process.env.waifupics}/sfw/waifu`);
       bot.sendPhoto(chatId, response.data.url);
