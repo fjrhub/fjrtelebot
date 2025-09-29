@@ -51,7 +51,7 @@ async function sendMessageToGroq(userId, userMessage, modelId = 2) {
 
   const chatCompletion = await groq.chat.completions.create({
     messages: conversations[id],
-    model: selectedModel || "compound-beta-mini",
+    model: selectedModel,
     temperature: 1,
     max_completion_tokens: 1024,
     top_p: 1,
