@@ -8,8 +8,6 @@ module.exports = {
   description: "Show bot status including uptime, memory, and platform",
   execute(bot, msg) {
     const chatId = msg.chat.id;
-    const fromId = msg.from?.id;
-    const chatType = msg.chat.type;
 
     if (
       !(
