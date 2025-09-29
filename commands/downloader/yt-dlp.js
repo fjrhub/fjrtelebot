@@ -21,8 +21,14 @@ module.exports = {
     }
     const url = text[1];
 
+    // Tentukan folder output di root project (/yt-dlp)
+    const outputDir = path.resolve(__dirname, "../../yt-dlp");
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
     // Nama file unik
-    const outputFile = path.join(__dirname, `video_${Date.now()}.mp4`);
+    const outputFile = path.join(outputDir, `video_${Date.now()}.mp4`);
 
     bot.sendMessage(chatId, "⏳ Sedang mendownload video, tunggu sebentar...");
 
@@ -36,9 +42,8 @@ module.exports = {
       }
 
       try {
-        // Kirim video ke Telegram
         await bot.sendVideo(chatId, outputFile, {
-          caption: `✅ Download selesai dari:\n${url}`,
+          caption: `✅ Download selesai dari:\n${url}`
         });
 
         // Hapus file setelah dikirim
