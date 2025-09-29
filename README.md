@@ -72,7 +72,6 @@ pnpm start
 | `/sholat`         | Show prayer times                   |
 | `/balance`        | Display user balance                |
 | `/addbalance`     | Add balance to a user               |
-| `/duck <query>`   | Search information using DuckDuckGo |
 
 ## ✅ Main Dependencies
 
