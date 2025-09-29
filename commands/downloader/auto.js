@@ -338,10 +338,6 @@ Downloads: ${data.stats?.download || "?"}`;
         fs.mkdirSync(outputDir, { recursive: true });
 
       const outputFile = path.join(outputDir, `video_${Date.now()}.%(ext)s`);
-      await bot.sendMessage(
-        chatId,
-        "⏳ Semua API gagal, fallback ke yt-dlp..."
-      );
 
       return new Promise((resolve) => {
         exec(
@@ -385,7 +381,7 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isFacebook) {
         const res1 = await axios.get(
-          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(
+          `${process.env.a}/api/d/facebook?url=${encodeURIComponent(
             input
           )}`
         );
@@ -406,7 +402,7 @@ Downloads: ${data.stats?.download || "?"}`;
       if (isInstagram) {
         const res1 = await axios.get(
           `${
-            process.env.diioffc
+            process.env.a
           }/api/download/instagram?url=${encodeURIComponent(input)}`,
           { timeout: 8000 }
         );
@@ -428,7 +424,7 @@ Downloads: ${data.stats?.download || "?"}`;
       }
 
       const res1 = await axios.get(
-        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
+        `${process.env.a}/api/download/tiktok?url=${encodeURIComponent(
           input
         )}`
       );
@@ -450,7 +446,7 @@ Downloads: ${data.stats?.download || "?"}`;
         if (isFacebook) {
           const res2 = await axios.get(
             `${
-              process.env.archive
+              process.env.a
             }/api/download/facebook?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
@@ -467,7 +463,7 @@ Downloads: ${data.stats?.download || "?"}`;
         if (isInstagram) {
           const res2 = await axios.get(
             `${
-              process.env.archive
+              process.env.a
             }/api/download/instagram?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
@@ -482,7 +478,7 @@ Downloads: ${data.stats?.download || "?"}`;
         }
 
         const res2 = await axios.get(
-          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
+          `${process.env.a}/api/download/tiktok?url=${encodeURIComponent(
             input
           )}`,
           { timeout: 8000 }
@@ -501,7 +497,7 @@ Downloads: ${data.stats?.download || "?"}`;
 
           if (isFacebook) {
             const res3 = await axios.get(
-              `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
+              `${process.env.a}/api/fbdl?url=${encodeURIComponent(input)}`,
               { timeout: 8000 }
             );
             const result3 = res3.data?.data;
@@ -516,7 +512,7 @@ Downloads: ${data.stats?.download || "?"}`;
 
           if (isInstagram) {
             const res3 = await axios.get(
-              `${process.env.vreden}/api/igdownload?url=${encodeURIComponent(
+              `${process.env.a}/api/igdownload?url=${encodeURIComponent(
                 input
               )}`,
               { timeout: 8000 }
@@ -533,7 +529,7 @@ Downloads: ${data.stats?.download || "?"}`;
           }
 
           const res3 = await axios.get(
-            `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
+            `${process.env.a}/api/tiktok?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
           const result3 = res3.data?.result;
