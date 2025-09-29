@@ -3,7 +3,7 @@ const axios = require("axios");
 
 module.exports = {
   name: "waifupics",
-  description: "Get a random waifu image from the API",
+  description: "Get a random waifu image from the API waifupics",
   async execute(bot, msg) {
     const chatId = msg.chat.id;
     if (!privat(chatId)) return;
