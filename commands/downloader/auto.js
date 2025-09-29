@@ -353,45 +353,56 @@ Downloads: ${data.stats?.download || "?"}`;
             }
 
             try {
-              // cari file hasil download
+              // cari file hasil download (video)
               const files = fs
                 .readdirSync(outputDir)
                 .filter((f) => f.startsWith("video_"));
-              const latestFile = path.join(
-                outputDir,
-                files.find((f) => f.endsWith(".mp4"))
-              );
-              const thumbFile = path.join(
-                outputDir,
-                files.find((f) => f.match(/\.(jpg|png)$/))
+              const videoFile = files.find((f) =>
+                f.match(/\.(mp4|webm|mkv)$/i)
               );
 
+              if (!videoFile) {
+                await bot.sendMessage(
+                  chatId,
+                  "❌ Tidak menemukan file video hasil yt-dlp."
+                );
+                return resolve(false);
+              }
+
+              const latestFile = path.join(outputDir, videoFile);
+
+              // cari thumbnail
+              const thumbFile = files.find((f) => f.match(/\.(jpg|png)$/i));
               let finalThumb = undefined;
-              if (thumbFile && fs.existsSync(thumbFile)) {
+
+              if (thumbFile) {
+                const fullThumbPath = path.join(outputDir, thumbFile);
                 const resizedThumb = path.join(
                   outputDir,
                   `thumb_${Date.now()}.jpg`
                 );
+
                 // resize thumbnail max 320x320
                 await new Promise((res) => {
                   exec(
-                    `ffmpeg -y -i "${thumbFile}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${resizedThumb}"`,
+                    `ffmpeg -y -i "${fullThumbPath}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${resizedThumb}"`,
                     () => res()
                   );
                 });
+
                 finalThumb = resizedThumb;
               }
 
-              // kirim video dengan preview
+              // kirim video (dengan atau tanpa thumbnail)
               await bot.sendVideo(chatId, latestFile, {
                 caption: `✅ Download selesai via yt-dlp\n${url}`,
-                thumb: finalThumb,
+                ...(finalThumb ? { thumb: finalThumb } : {}),
               });
 
               // hapus file setelah kirim
               fs.unlinkSync(latestFile);
-              if (thumbFile && fs.existsSync(thumbFile))
-                fs.unlinkSync(thumbFile);
+              if (thumbFile && fs.existsSync(path.join(outputDir, thumbFile)))
+                fs.unlinkSync(path.join(outputDir, thumbFile));
               if (finalThumb && fs.existsSync(finalThumb))
                 fs.unlinkSync(finalThumb);
 
