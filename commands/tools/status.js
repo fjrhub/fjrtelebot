@@ -1,11 +1,18 @@
 const fs = require("fs");
 const os = require("os");
 const { execSync } = require("child_process");
-const { privat, isAuthorized, getUptime, formatBytes, } = require("@/utils/helper");
+const pkg = require("@/package.json");
+const {
+  privat,
+  isAuthorized,
+  getUptime,
+  formatBytes,
+  formatTime,
+} = require("@/utils/helper");
 
 module.exports = {
   name: "status",
-  description: "Show bot status including uptime, memory, and platform",
+  description: "Show bot status including uptime, memory, system, and platform",
   execute(bot, msg) {
     const chatId = msg.chat.id;
 
@@ -38,7 +45,9 @@ module.exports = {
           const release = execSync("getprop ro.build.version.release")
             .toString()
             .trim();
-          const arch = execSync("getprop ro.product.cpu.abi").toString().trim();
+          const arch = execSync("getprop ro.product.cpu.abi")
+            .toString()
+            .trim();
           if (release) return `Android ${release} (${arch})`;
         } catch (_) {}
 
@@ -48,16 +57,25 @@ module.exports = {
       }
     }
 
-    const message = `BOT STATUS
-• Uptime: ${uptime}
+const message = `🤖 BOT STATUS
+• Bot Uptime: ${uptime}
+• System Uptime: ${formatTime(os.uptime())}
 • Node.js: ${process.version}
 • Platform: ${getPrettyOS()}
+• Bot Version: ${pkg.version}
+• CPU: ${os.cpus()[0].model} (${os.cpus().length} cores)
+• CPU Usage: ${cpuPercent}%
+• RAM Total: ${formatBytes(os.totalmem())}
+• RAM Free: ${formatBytes(os.freemem())}
 • RSS: ${formatBytes(mem.rss)}
 • Heap Total: ${formatBytes(mem.heapTotal)}
 • Heap Used: ${formatBytes(mem.heapUsed)}
 • External: ${formatBytes(mem.external)}
-• Usage: ${cpuPercent}%
 `;
-    bot.sendMessage(chatId, message);
+    try {
+      bot.sendMessage(chatId, message);
+    } catch (err) {
+      console.error("Failed to send status:", err);
+    }
   },
 };
