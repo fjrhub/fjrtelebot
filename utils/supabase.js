@@ -1,6 +1,9 @@
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 async function insertBalance(amount, information, wallet) {
   wallet = wallet.toUpperCase(); // Make sure capitalization
@@ -29,13 +32,21 @@ async function insertBalance(amount, information, wallet) {
 
 // Get all balance data ordered by ID (ascending)
 async function getAllBalances() {
-  return await supabase .from('balance').select('*').gte('id', 1).lte('id', 10).order('id', { ascending: true })
+  return await supabase
+    .from("balance")
+    .select("*")
+    .gte("id", 1)
+    .lte("id", 10)
+    .order("id", { ascending: true });
 }
-
 
 // Take one balance data (first)
 async function getSingleBalance() {
-  return await supabase.from('balance').select('*').eq("wallet", "DOMPET").single();
+  return await supabase
+    .from("balance")
+    .select("*")
+    .eq("wallet", "DOMPET")
+    .single();
 }
 
 const transactionsCache = new Map();
@@ -113,7 +124,7 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
     .update({
       amount: newAmount,
       information: newInfo,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
     })
     .eq("id", id);
 
@@ -150,7 +161,7 @@ async function updateTransactionAndBalance(id, newAmount, newInfo) {
     newAmount,
     newBalance,
     wallet,
-    newInfo
+    newInfo,
   };
 }
 
@@ -166,7 +177,8 @@ async function preloadAutoStatus() {
 }
 
 const autoStatusCache = new Map();
-const CACHE_TTL1 = 3 * 60 * 60 * 1000; // 3 hours in ms
+const inFlightRequests = new Map(); // 🚦 track request that is currently running
+const CACHE_TTL1 = 3 * 60 * 60 * 1000; // 3 hours
 
 // ✅ Check if auto is enabled for a user
 async function isAutoEnabled(userId) {
@@ -178,47 +190,72 @@ async function isAutoEnabled(userId) {
 
     if (!isExpired) {
       console.log(`[CACHE HIT] Auto status for user ${userId}: ${value}`);
-      return value; // Use cached value
+      return value;
     }
 
-    console.log(`[CACHE EXPIRED] Auto status for user ${userId}. Fetching from Supabase...`);
-    autoStatusCache.delete(userId); // Remove expired cache
+    console.log(
+      `[CACHE EXPIRED] Auto status for user ${userId}. Fetching from Supabase...`
+    );
+    autoStatusCache.delete(userId);
   }
 
-  // 🔍 Query Supabase if cache is empty or expired
-  console.log(`[DB QUERY] Fetching auto status for user ${userId} from Supabase...`);
-  const { data, error } = await supabase
-    .from("auto_status")
-    .select("status")
-    .eq("id", userId)
-    .single();
+  // 🚦 Check if there is already a query for this userId
+  if (inFlightRequests.has(userId)) {
+    console.log(`[WAIT] Request already in flight for user ${userId}`);
+    return inFlightRequests.get(userId);
+  }
 
-  if (!error && data) {
-    const isActive = Number(data.status) === 1;
-    console.log(`[DB RESULT] Auto status for user ${userId}: ${isActive}`);
+  // 🔍 New query to Supabase
+  console.log(
+    `[DB QUERY] Fetching auto status for user ${userId} from Supabase...`
+  );
+  const promise = (async () => {
+    const { data, error } = await supabase
+      .from("auto_status")
+      .select("status")
+      .eq("id", userId)
+      .single();
+
+    let isActive;
+    if (!error && data) {
+      isActive = Number(data.status) === 1;
+      console.log(`[DB RESULT] Auto status for user ${userId}: ${isActive}`);
+    } else {
+      console.log(
+        `[DB INSERT] No record found for user ${userId}, setting default status = true`
+      );
+      await setAutoStatus(userId, true);
+      isActive = true;
+    }
+
     autoStatusCache.set(userId, { value: isActive, timestamp: Date.now() });
     return isActive;
-  }
+  })();
 
-  // Default: insert a new record → enabled
-  console.log(`[DB INSERT] No record found for user ${userId}, setting default status = true`);
-  await setAutoStatus(userId, true);
-  return true;
+  // save the promise temporarily → so that other requests wait for this result
+  inFlightRequests.set(userId, promise);
+
+  try {
+    const result = await promise;
+    return result;
+  } finally {
+    inFlightRequests.delete(userId); // delete lock after finished
+  }
 }
 
 // ✅ Update status in Supabase and cache
 async function setAutoStatus(userId, status) {
-  console.log(`[DB UPSERT] Updating auto status for user ${userId} → ${status}`);
+  console.log(
+    `[DB UPSERT] Updating auto status for user ${userId} → ${status}`
+  );
   await supabase.from("auto_status").upsert({
     id: userId,
     status: status ? 1 : 0,
   });
 
-  // Update cache immediately to stay consistent
   console.log(`[CACHE UPDATE] Auto status for user ${userId} set to ${status}`);
   autoStatusCache.set(userId, { value: !!status, timestamp: Date.now() });
 }
-
 
 module.exports = {
   supabase,
@@ -229,5 +266,5 @@ module.exports = {
   updateTransactionAndBalance,
   preloadAutoStatus,
   isAutoEnabled,
-  setAutoStatus
+  setAutoStatus,
 };
