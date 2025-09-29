@@ -1,7 +1,6 @@
 const fs = require("fs");
 const os = require("os");
 const { execSync } = require("child_process");
-const pkg = require("@/package.json");
 const {
   privat,
   isAuthorized,
