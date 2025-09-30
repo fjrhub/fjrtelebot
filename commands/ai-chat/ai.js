@@ -28,17 +28,14 @@ module.exports = {
     const text = ctx.message.text?.trim();
     if (!text || text === "/ai") {
       return ctx.reply(
-        `*Welcome to AI Chat*
-
-Type your question after \`/ai\`, for example:
-\`/ai What is artificial intelligence?\`
-
-*Other commands:*
-• \`/ai history\` – View your previous messages  
-• \`/ai new\` – Start a new conversation
-
-_Your chat history is saved per user (and per group if in a group)._`,
-        { parse_mode: "Markdown" }
+        `<b>Welcome to AI Chat</b>\n\n` +
+          `Type your question after <code>/ai</code>, for example:\n` +
+          `<code>/ai What is artificial intelligence?</code>\n\n` +
+          `<b>Other commands:</b>\n` +
+          `• <code>/ai history</code> – View your previous messages\n` +
+          `• <code>/ai new</code> – Start a new conversation\n\n` +
+          `<i>Your chat history is saved per user (and per group if in a group).</i>`,
+        { parse_mode: "HTML" }
       );
     }
 
@@ -85,10 +82,10 @@ _Your chat history is saved per user (and per group if in a group)._`,
 
       if (response.length > 4096) {
         for (let i = 0; i < response.length; i += 4096) {
-          await ctx.reply(response.slice(i, i + 4096));
+          await ctx.reply(response.slice(i, i + 4096), { parse_mode: "HTML" });
         }
       } else {
-        ctx.reply(response, { parse_mode: "Markdown" });
+        ctx.reply(response, { parse_mode: "HTML" });
       }
     } catch (err) {
       console.error("AI Error:", err);
