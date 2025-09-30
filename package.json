@@ -4,6 +4,7 @@
   "scripts": {
     "start": "node index.js"
   },
+  "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.12.1",
