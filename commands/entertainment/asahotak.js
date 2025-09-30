@@ -1,33 +1,34 @@
-// commands/asahotak.js
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
+const { setGame, getGame, clearGame } = require("@/utils/games");
 
 module.exports = {
   name: "asahotak",
   description: "Brain teaser quiz game",
-  async execute(ctx, args, activeBrainTeaser) {
+
+  async execute(ctx, args) {
     const chatId = ctx.chat.id;
     if (!isAuthorized(chatId)) return;
 
     const subcommand = (args[0] || "").toLowerCase();
 
-    // surrender
+    // 🏳️ Surrender
     if (subcommand === "surrender") {
-      if (!activeBrainTeaser[chatId]) {
+      const currentGame = getGame(chatId, "asahotak");
+      if (!currentGame) {
         return ctx.reply("⚠️ No Brain Teaser game is currently running in this chat.");
       }
 
-      const { answer } = activeBrainTeaser[chatId];
-      await ctx.reply(`🏳️ Game ended. The correct answer was *${answer}*`, {
+      await ctx.reply(`🏳️ Game ended. The correct answer was *${currentGame.answer}*`, {
         parse_mode: "Markdown",
       });
 
-      delete activeBrainTeaser[chatId];
+      clearGame(chatId, "asahotak");
       return;
     }
 
-    // prevent multiple games
-    if (activeBrainTeaser[chatId]) {
+    // 🚫 Prevent multiple games
+    if (getGame(chatId, "asahotak")) {
       return ctx.reply(
         "⚠️ A Brain Teaser game is already running in this chat. Please finish it or surrender first."
       );
@@ -44,7 +45,7 @@ module.exports = {
         const answer = result.data.jawaban;
         console.log(answer)
 
-        activeBrainTeaser[chatId] = { answer };
+        setGame(chatId, "asahotak", { answer });
 
         await ctx.reply(question, { parse_mode: "Markdown" });
       } else {
