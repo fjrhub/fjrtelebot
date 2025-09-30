@@ -1,10 +1,10 @@
 const fs = require("fs");
 const path = require("path");
+const { checkAnswer } = require("@/utils/games");
 
 const commands = new Map();
-const activeBrainTeaser = {}; // 🧠 simpan state game per chat
 
-// 🔁 Recursively load all command files
+// 🔁 Load semua command
 function loadCommands(dir) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
@@ -24,32 +24,17 @@ function loadCommands(dir) {
 
 loadCommands(path.join(__dirname, "commands"));
 
-// 🔧 Handle normal messages
+// 🔧 Handle pesan
 async function handleMessage(ctx) {
   if (!ctx.message?.text) return;
   const text = ctx.message.text;
 
-  // 🧠 Brain Teaser Answer Check
-  if (activeBrainTeaser[ctx.chat.id]) {
-    const userAnswer = text.trim().toLowerCase();
-    const correctAnswer = activeBrainTeaser[ctx.chat.id].answer.toLowerCase();
-
-    if (userAnswer === correctAnswer) {
-      await ctx.reply(
-        `✅ Correct! ${ctx.from.first_name} got it right!\nThe answer is *${activeBrainTeaser[ctx.chat.id].answer}*`,
-        { parse_mode: "Markdown" }
-      );
-      delete activeBrainTeaser[ctx.chat.id];
-      return;
-    }
-  }
-
-  // 🔍 Jika command
+  // Kalau command
   if (text.startsWith("/")) {
     return handleCommand(ctx);
   }
 
-  // auto detection (contoh: TikTok link)
+  // Auto detection
   const autoHandler = commands.get("auto");
   if (autoHandler) {
     try {
@@ -58,9 +43,12 @@ async function handleMessage(ctx) {
       console.error("❌ Auto handler error:", err.message);
     }
   }
+
+  // 🔎 Cek jawaban game
+  await checkAnswer(ctx);
 }
 
-// 🛠️ Handle /commands
+// 🛠️ Handle command
 function handleCommand(ctx) {
   const text = ctx.message.text;
   if (!text.startsWith("/")) return;
@@ -71,14 +59,14 @@ function handleCommand(ctx) {
   if (!command) return;
 
   try {
-    command.execute(ctx, args, activeBrainTeaser); // 🧩 lempar state ke command
+    command.execute(ctx, args);
   } catch (err) {
     console.error(`Error in command "${commandName}"`, err);
     ctx.reply("⚠️ Terjadi error saat menjalankan command.");
   }
 }
 
-// 🎯 Handle Inline Button Callback Queries
+// 🎯 Handle callback
 function handleCallback(ctx) {
   const data = ctx.callbackQuery?.data;
   if (!data) return;
@@ -98,4 +86,4 @@ function handleCallback(ctx) {
   }
 }
 
-module.exports = { handleMessage, handleCommand, handleCallback, activeBrainTeaser };
+module.exports = { handleMessage, handleCommand, handleCallback };
