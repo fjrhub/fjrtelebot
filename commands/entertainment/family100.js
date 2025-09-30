@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
 const { setGame, getGame, clearGame } = require("@/utils/games");
+const tools = require("@/utils/api");
 
 module.exports = {
   name: "family100",
@@ -16,11 +17,15 @@ module.exports = {
     if (subcommand === "surrender") {
       const currentGame = getGame(chatId, "family100");
       if (!currentGame) {
-        return ctx.reply("⚠️ No Family 100 game is currently running in this chat.");
+        return ctx.reply(
+          "⚠️ No Family 100 game is currently running in this chat."
+        );
       }
 
       await ctx.reply(
-        `🏳️ Game ended. The correct answers were:\n- ${currentGame.answers.join("\n- ")}`,
+        `🏳️ Game ended. The correct answers were:\n- ${currentGame.answers.join(
+          "\n- "
+        )}`,
         { parse_mode: "Markdown" }
       );
 
@@ -36,9 +41,12 @@ module.exports = {
     }
 
     try {
-      const res = await axios.get(`${process.env.siputzx}/api/games/family100`, {
-        timeout: 8000,
-      });
+      const res = await axios.get(
+        tools.createUrl("siputzx", "/api/games/family100"),
+        {
+          timeout: 8000,
+        }
+      );
 
       const result = res.data;
       if (result?.status && result.data) {
