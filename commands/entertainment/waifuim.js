@@ -1,5 +1,6 @@
 const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
+const tools = require("@/utils/api");
 
 module.exports = {
   name: "waifuim",
@@ -9,7 +10,11 @@ module.exports = {
     if (!isAuthorized(chatId)) return;
 
     try {
-      const response = await axios.get(`${process.env.waifuim}/search?included_tags=waifu`, { timeout: 8000 });
+      const response = await axios.get(
+        tools.createUrl("waifuim", "/search?included_tags=waifu"),
+        { timeout: 8000 }
+      );
+
       const imageUrl = response.data?.images?.[0]?.url;
 
       if (!imageUrl) {
