@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const commands = new Map();
+const activeBrainTeaser = {}; // 🧠 simpan state game per chat
 
 // 🔁 Recursively load all command files
 function loadCommands(dir) {
@@ -26,11 +27,26 @@ loadCommands(path.join(__dirname, "commands"));
 // 🔧 Handle normal messages
 async function handleMessage(ctx) {
   if (!ctx.message?.text) return;
-
   const text = ctx.message.text;
 
+  // 🧠 Brain Teaser Answer Check
+  if (activeBrainTeaser[ctx.chat.id]) {
+    const userAnswer = text.trim().toLowerCase();
+    const correctAnswer = activeBrainTeaser[ctx.chat.id].answer.toLowerCase();
+
+    if (userAnswer === correctAnswer) {
+      await ctx.reply(
+        `✅ Correct! ${ctx.from.first_name} got it right!\nThe answer is *${activeBrainTeaser[ctx.chat.id].answer}*`,
+        { parse_mode: "Markdown" }
+      );
+      delete activeBrainTeaser[ctx.chat.id];
+      return;
+    }
+  }
+
+  // 🔍 Jika command
   if (text.startsWith("/")) {
-    return handleCommand(ctx); // If it's a command
+    return handleCommand(ctx);
   }
 
   // auto detection (contoh: TikTok link)
@@ -55,7 +71,7 @@ function handleCommand(ctx) {
   if (!command) return;
 
   try {
-    command.execute(ctx, args);
+    command.execute(ctx, args, activeBrainTeaser); // 🧩 lempar state ke command
   } catch (err) {
     console.error(`Error in command "${commandName}"`, err);
     ctx.reply("⚠️ Terjadi error saat menjalankan command.");
@@ -82,4 +98,4 @@ function handleCallback(ctx) {
   }
 }
 
-module.exports = { handleMessage, handleCommand, handleCallback };
+module.exports = { handleMessage, handleCommand, handleCallback, activeBrainTeaser };
