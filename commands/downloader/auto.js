@@ -333,90 +333,70 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     // helper fallback
-    async function ytDlpFallback(bot, chatId, url) {
-      const outputDir = path.resolve(__dirname, "../../yt-dlp");
-      if (!fs.existsSync(outputDir))
-        fs.mkdirSync(outputDir, { recursive: true });
+async function ytDlpFallback(bot, chatId, url) {
+  const outputDir = path.resolve(__dirname, "../../yt-dlp");
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
 
-      const outputFile = path.join(outputDir, `video_${Date.now()}.%(ext)s`);
+  const timestamp = Date.now();
+  const rawOutput = path.join(outputDir, `video_${timestamp}`);
+  const outputFile = `${rawOutput}.mp4`; // hasil akhir video
 
-      return new Promise((resolve) => {
-        exec(
-          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${outputFile}" "${url}"`,
-          async (error) => {
-            if (error) {
-              await bot.sendMessage(
-                chatId,
-                `❌ yt-dlp error: ${error.message}`
-              );
-              return resolve(false);
-            }
+  return new Promise((resolve) => {
+    exec(
+      `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${rawOutput}.%(ext)s" "${url}"`,
+      async (error) => {
+        if (error) {
+          await bot.sendMessage(chatId, `❌ yt-dlp error: ${error.message}`);
+          return resolve(false);
+        }
 
-            try {
-              // search for downloaded files (videos)
-              const files = fs
-                .readdirSync(outputDir)
-                .filter((f) => f.startsWith("video_"));
-              const videoFile = files.find((f) =>
-                f.match(/\.(mp4|webm|mkv)$/i)
-              );
-
-              if (!videoFile) {
-                await bot.sendMessage(
-                  chatId,
-                  "❌ Not found the yt-dlp video file."
-                );
-                return resolve(false);
-              }
-
-              const latestFile = path.join(outputDir, videoFile);
-
-              // search thumbnail
-              const thumbFile = files.find((f) => f.match(/\.(jpg|png)$/i));
-              let finalThumb = undefined;
-
-              if (thumbFile) {
-                const fullThumbPath = path.join(outputDir, thumbFile);
-                const resizedThumb = path.join(
-                  outputDir,
-                  `thumb_${Date.now()}.jpg`
-                );
-
-                // resize thumbnail max 320x320
-                await new Promise((res) => {
-                  exec(
-                    `ffmpeg -y -i "${fullThumbPath}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${resizedThumb}"`,
-                    () => res()
-                  );
-                });
-
-                finalThumb = resizedThumb;
-              }
-
-              // send video (with or without thumbnail)
-              await bot.sendVideo(chatId, latestFile, {
-                ...(finalThumb ? { thumb: finalThumb } : {}),
-              });
-
-              // delete files after sending
-              fs.unlinkSync(latestFile);
-              if (thumbFile && fs.existsSync(path.join(outputDir, thumbFile)))
-                fs.unlinkSync(path.join(outputDir, thumbFile));
-              if (finalThumb && fs.existsSync(finalThumb))
-                fs.unlinkSync(finalThumb);
-
-              resolve(true);
-            } catch (err) {
-              await bot.sendMessage(
-                chatId,
-                `❌ Failed to send yt-dlp results: ${err.message}`
-              );
-              resolve(false);
-            }
+        try {
+          // cek apakah video berhasil terdownload
+          if (!fs.existsSync(outputFile)) {
+            await bot.sendMessage(chatId, "❌ Video file not found.");
+            return resolve(false);
           }
-        );
-      });
-    }
+
+          // cari thumbnail sesuai prefix
+          const thumbFile = [`${rawOutput}.jpg`, `${rawOutput}.png`].find((f) =>
+            fs.existsSync(f)
+          );
+          let finalThumb;
+
+          if (thumbFile) {
+            finalThumb = `${rawOutput}_thumb.jpg`;
+            await new Promise((res) => {
+              exec(
+                `ffmpeg -y -i "${thumbFile}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${finalThumb}"`,
+                () => res()
+              );
+            });
+          }
+
+          // kirim video ke Telegram
+          await bot.sendVideo(chatId, outputFile, {
+            ...(finalThumb ? { thumb: finalThumb } : {}),
+          });
+
+          // hapus file setelah selesai
+          fs.unlinkSync(outputFile);
+          if (thumbFile && fs.existsSync(thumbFile)) fs.unlinkSync(thumbFile);
+          if (finalThumb && fs.existsSync(finalThumb)) fs.unlinkSync(finalThumb);
+
+          resolve(true);
+        } catch (err) {
+          await bot.sendMessage(
+            chatId,
+            `❌ Failed to send yt-dlp results: ${err.message}`
+          );
+          resolve(false);
+        }
+      }
+    );
+  });
+}
 
     try {
       await sendOrEditStatus("📡 Trying API 1...");
