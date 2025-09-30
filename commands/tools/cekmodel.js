@@ -10,7 +10,7 @@ module.exports = {
 
     setTimeout(async () => {
       try {
-        if (messageId) await ctx.deleteMessage(messageId);
+        if (messageId) await ctx.api.deleteMessage(chatId, messageId);
       } catch (err) {
         console.error("Failed to delete user message:", err.message);
       }
@@ -26,16 +26,15 @@ module.exports = {
 
       return ctx.reply(
         `🔐 *Model Status (Owner View)*\n\n` +
-        `• 👑 Privat Model: *${modelPriv}*\n` +
-        `• 👥 Authorized Model: *${modelAuth}*`,
+          `• 👑 Privat Model: *${modelPriv}*\n` +
+          `• 👥 Authorized Model: *${modelAuth}*`,
         { parse_mode: "Markdown" }
       );
     }
 
     const model = getModelByRole(chatId) || "Not set";
-    return ctx.reply(
-      `🔍 Current model for *authorized* users:\n*${model}*`,
-      { parse_mode: "Markdown" }
-    );
-  }
+    return ctx.reply(`🔍 Current model for *authorized* users:\n*${model}*`, {
+      parse_mode: "Markdown",
+    });
+  },
 };
