@@ -333,57 +333,60 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     // helper fallback
-    async function ytDlpFallback(bot, chatId, url) {
-      const outputDir = path.resolve(__dirname, "../../yt-dlp");
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
+    function ytDlpFallback(bot, chatId, url) {
+      return new Promise((resolve) => {
+        const outputDir = path.resolve(__dirname, "../../yt-dlp");
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
 
-      const timestamp = Date.now();
-      const rawOutput = path.join(outputDir, `video_${timestamp}`);
-      const outputFile = `${rawOutput}.mp4`;
+        const timestamp = Date.now();
+        const basePath = path.join(outputDir, `video_${timestamp}`);
+        const outputFile = `${basePath}.mp4`;
 
-      return new Promise((resolve, reject) => {
         exec(
-          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${rawOutput}.%(ext)s" "${url}"`,
+          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${basePath}.%(ext)s" "${url}"`,
           async (error) => {
-            try {
-              if (error) {
-                return reject(new Error(`yt-dlp error: ${error.message}`));
-              }
-
-              if (!fs.existsSync(outputFile)) {
-                return reject(new Error("yt-dlp video file not found"));
-              }
-
-              const thumbFile = [`${rawOutput}.jpg`, `${rawOutput}.png`].find(
-                (f) => fs.existsSync(f)
+            if (error) {
+              await bot.sendMessage(
+                chatId,
+                `❌ yt-dlp error: ${error.message}`
               );
-              let finalThumb;
+              return resolve(false);
+            }
 
-              if (thumbFile) {
-                finalThumb = `${rawOutput}_thumb.jpg`;
-                await new Promise((res) => {
-                  exec(
-                    `ffmpeg -y -i "${thumbFile}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${finalThumb}"`,
-                    () => res()
-                  );
-                });
+            try {
+              // kirim hasil video
+              await bot.sendVideo(chatId, outputFile);
+
+              // cleanup semua file dengan prefix yang sama
+              const dir = path.dirname(basePath);
+              const baseName = path.basename(basePath);
+
+              for (const file of fs.readdirSync(dir)) {
+                if (file.startsWith(baseName)) {
+                  fs.unlinkSync(path.join(dir, file));
+                }
               }
-
-              await bot.sendVideo(chatId, outputFile, {
-                ...(finalThumb ? { thumb: finalThumb } : {}),
-              });
-
-              fs.unlinkSync(outputFile);
-              if (thumbFile && fs.existsSync(thumbFile))
-                fs.unlinkSync(thumbFile);
-              if (finalThumb && fs.existsSync(finalThumb))
-                fs.unlinkSync(finalThumb);
 
               resolve(true);
             } catch (err) {
-              reject(new Error(`yt-dlp send error: ${err.message}`));
+              await bot.sendMessage(
+                chatId,
+                `❌ Gagal kirim video: ${err.message}`
+              );
+
+              // tetap cleanup meski gagal kirim
+              const dir = path.dirname(basePath);
+              const baseName = path.basename(basePath);
+
+              for (const file of fs.readdirSync(dir)) {
+                if (file.startsWith(baseName)) {
+                  fs.unlinkSync(path.join(dir, file));
+                }
+              }
+
+              resolve(false);
             }
           }
         );
