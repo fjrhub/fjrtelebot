@@ -1,10 +1,10 @@
-// commands/auto.js
 const { isAutoEnabled } = require("@/utils/supabase");
 const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
 const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const { InputFile } = require("grammy");
 
 module.exports = {
   name: "auto",
@@ -52,7 +52,11 @@ module.exports = {
         }
       } else {
         try {
-          await ctx.api.editMessageText(chatId, statusMessage.message_id, newText);
+          await ctx.api.editMessageText(
+            chatId,
+            statusMessage.message_id,
+            newText
+          );
         } catch (e) {
           // ignore edit failure
         }
@@ -72,7 +76,9 @@ module.exports = {
     };
 
     const toNumberFormat = (n) =>
-      n === undefined || n === null ? "0" : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      n === undefined || n === null
+        ? "0"
+        : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
     function formatSize(bytes) {
       if (!bytes && bytes !== 0) return "0 B";
@@ -80,7 +86,8 @@ module.exports = {
       if (Number.isNaN(bytes)) return "0 B";
       if (bytes < 1024) return bytes + " B";
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
-      if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+      if (bytes < 1024 * 1024 * 1024)
+        return (bytes / (1024 * 1024)).toFixed(2) + " MB";
       return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
     }
 
@@ -112,7 +119,7 @@ module.exports = {
         `Comment Count: ${toNumberFormat(commentCount)}`,
         `Share Count: ${toNumberFormat(shareCount)}`,
         `Download Count: ${toNumberFormat(downloadCount)}`,
-        `Size: ${formatSize(sizeInBytes)}`
+        `Size: ${formatSize(sizeInBytes)}`,
       ].join("\n");
 
       const images = Array.isArray(r.images) ? r.images : [];
@@ -123,7 +130,7 @@ module.exports = {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {})
+            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
         }
@@ -131,13 +138,17 @@ module.exports = {
       }
 
       const hdPlayUrl = r.hdplay || r.play || r.wmplay;
-      if (!hdPlayUrl || typeof hdPlayUrl !== "string" || !hdPlayUrl.startsWith("http")) {
+      if (
+        !hdPlayUrl ||
+        typeof hdPlayUrl !== "string" ||
+        !hdPlayUrl.startsWith("http")
+      ) {
         throw new Error("Invalid HD play URL from API.");
       }
       await ctx.api.sendVideo(chatId, hdPlayUrl, {
         caption,
         parse_mode: "Markdown",
-        supports_streaming: true
+        supports_streaming: true,
       });
     };
 
@@ -150,18 +161,23 @@ module.exports = {
         `Views: ${toNumberFormat(md.view)}`,
         `Comments: ${toNumberFormat(md.comment)}`,
         `Shares: ${toNumberFormat(md.share)}`,
-        `Downloads: ${toNumberFormat(md.download)}`
+        `Downloads: ${toNumberFormat(md.download)}`,
       ].join("\n");
 
-      const caption = `${md.durasi && md.durasi > 0 ? `Duration: ${md.durasi}s\n` : ""}${statsOnly}`;
+      const caption = `${
+        md.durasi && md.durasi > 0 ? `Duration: ${md.durasi}s\n` : ""
+      }${statsOnly}`;
 
-      if (Array.isArray(data.media?.image_slide) && data.media.image_slide.length > 0) {
+      if (
+        Array.isArray(data.media?.image_slide) &&
+        data.media.image_slide.length > 0
+      ) {
         const groups = chunkArray(data.media.image_slide, 10);
         for (const grp of groups) {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {})
+            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
         }
@@ -172,7 +188,7 @@ module.exports = {
         await ctx.api.sendVideo(chatId, data.media.play, {
           caption,
           parse_mode: "Markdown",
-          supports_streaming: true
+          supports_streaming: true,
         });
         return;
       }
@@ -184,25 +200,36 @@ module.exports = {
       if (!data || typeof data !== "object") {
         throw new Error("Invalid API 3 data.");
       }
-      const photos = Array.isArray(data.data) ? data.data.filter((item) => item.type === "photo") : [];
-      const video = Array.isArray(data.data) ? data.data.find((item) => item.type === "nowatermark") : null;
+      const photos = Array.isArray(data.data)
+        ? data.data.filter((item) => item.type === "photo")
+        : [];
+      const video = Array.isArray(data.data)
+        ? data.data.find((item) => item.type === "nowatermark")
+        : null;
 
       const statsOnly = [
         `Views: ${data.stats?.views ?? "?"}`,
         `Comments: ${data.stats?.comment ?? "?"}`,
         `Shares: ${data.stats?.share ?? "?"}`,
-        `Downloads: ${data.stats?.download ?? "?"}`
+        `Downloads: ${data.stats?.download ?? "?"}`,
       ].join("\n");
 
-      const caption = `${data.durations && data.durations > 0 ? `Duration: ${data.durations}s\n` : ""}${statsOnly}`;
+      const caption = `${
+        data.durations && data.durations > 0
+          ? `Duration: ${data.durations}s\n`
+          : ""
+      }${statsOnly}`;
 
       if (photos.length > 0) {
-        const groups = chunkArray(photos.map((p) => p.url), 10);
+        const groups = chunkArray(
+          photos.map((p) => p.url),
+          10
+        );
         for (const grp of groups) {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {})
+            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
         }
@@ -213,7 +240,7 @@ module.exports = {
         await ctx.api.sendVideo(chatId, video.url, {
           caption,
           parse_mode: "Markdown",
-          supports_streaming: true
+          supports_streaming: true,
         });
         return;
       }
@@ -223,8 +250,11 @@ module.exports = {
 
     // Facebook handlers
     const fbHandler1 = async (ctx, chatId, data) => {
-      if (!data || !Array.isArray(data.data)) throw new Error("Invalid FB API 1 format.");
-      const hdMp4Video = data.data.find((item) => item.format === "mp4" && item.resolution === "HD");
+      if (!data || !Array.isArray(data.data))
+        throw new Error("Invalid FB API 1 format.");
+      const hdMp4Video = data.data.find(
+        (item) => item.format === "mp4" && item.resolution === "HD"
+      );
       if (!hdMp4Video?.url) throw new Error("HD MP4 URL not found.");
       await ctx.api.sendVideo(chatId, hdMp4Video.url);
     };
@@ -245,7 +275,8 @@ module.exports = {
 
     // Instagram handlers
     const igHandler1 = async (ctx, chatId, data) => {
-      if (!data || !Array.isArray(data.result)) throw new Error("Invalid IG API 1 format.");
+      if (!data || !Array.isArray(data.result))
+        throw new Error("Invalid IG API 1 format.");
       const results = data.result;
       if (!results.length) throw new Error("IG API 1 returned empty media.");
 
@@ -273,9 +304,14 @@ module.exports = {
     };
 
     const igHandler2 = async (ctx, chatId, data) => {
-      if (!data || typeof data !== "object") throw new Error("Invalid IG API 2 format.");
+      if (!data || typeof data !== "object")
+        throw new Error("Invalid IG API 2 format.");
       const result = data.result || {};
-      const mediaUrls = Array.isArray(result.url) ? result.url : (typeof result.url === "string" ? [result.url] : []);
+      const mediaUrls = Array.isArray(result.url)
+        ? result.url
+        : typeof result.url === "string"
+        ? [result.url]
+        : [];
       const isVideo = !!result.isVideo;
 
       const caption = `${toNumberFormat(result.like)} Likes`;
@@ -284,7 +320,7 @@ module.exports = {
         await ctx.api.sendVideo(chatId, mediaUrls[0], {
           caption,
           parse_mode: "Markdown",
-          supports_streaming: true
+          supports_streaming: true,
         });
         return;
       }
@@ -295,7 +331,7 @@ module.exports = {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
-            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {})
+            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
         }
@@ -306,14 +342,23 @@ module.exports = {
     };
 
     const igHandler3 = async (ctx, chatId, data) => {
-      const mediaItems = Array.isArray(data?.result?.response?.data) ? data.result.response.data : [];
-      if (!mediaItems.length) throw new Error("IG API 3 returned empty media array.");
+      const mediaItems = Array.isArray(data?.result?.response?.data)
+        ? data.result.response.data
+        : [];
+      if (!mediaItems.length)
+        throw new Error("IG API 3 returned empty media array.");
 
-      const images = mediaItems.filter((i) => i.type === "image").map((i) => i.url);
-      const videos = mediaItems.filter((i) => i.type === "video").map((i) => i.url);
+      const images = mediaItems
+        .filter((i) => i.type === "image")
+        .map((i) => i.url);
+      const videos = mediaItems
+        .filter((i) => i.type === "video")
+        .map((i) => i.url);
 
       if (videos.length) {
-        await ctx.api.sendVideo(chatId, videos[0], { supports_streaming: true });
+        await ctx.api.sendVideo(chatId, videos[0], {
+          supports_streaming: true,
+        });
         return;
       }
 
@@ -329,62 +374,55 @@ module.exports = {
       throw new Error("IG API 3 returned unsupported media.");
     };
 
-    // YT-DLP fallback (uses ctx.api to send file stream)
-    function ytDlpFallback(ctx, chatId, url) {
+    // helper fallback
+    async function ytDlpFallback(ctx, url) {
       return new Promise((resolve) => {
         const outputDir = path.resolve(__dirname, "../../yt-dlp");
-        if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
 
         const timestamp = Date.now();
         const basePath = path.join(outputDir, `video_${timestamp}`);
         const outputFile = `${basePath}.mp4`;
 
-        const cmd = `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${basePath}.%(ext)s" "${url}"`;
-        exec(cmd, async (error, stdout, stderr) => {
-          if (error) {
-            try {
-              await ctx.api.sendMessage(chatId, `❌ yt-dlp error: ${error.message}`);
-            } catch (e) {}
-            return resolve(false);
-          }
-
-          // ensure file exists
-          if (!fs.existsSync(outputFile)) {
-            try {
-              await ctx.api.sendMessage(chatId, "❌ yt-dlp did not produce output file.");
-            } catch (e) {}
-            return resolve(false);
-          }
-
-          try {
-            // send file using stream
-            const stream = fs.createReadStream(outputFile);
-            await ctx.api.sendVideo(chatId, { source: stream }, { supports_streaming: true });
-            stream.close();
-            // cleanup files with same prefix
-            const dir = path.dirname(basePath);
-            const baseName = path.basename(basePath);
-            for (const file of fs.readdirSync(dir)) {
-              if (file.startsWith(baseName)) {
-                try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
-              }
+        exec(
+          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${basePath}.%(ext)s" "${url}"`,
+          async (error) => {
+            if (error) {
+              await ctx.reply(`❌ yt-dlp error: ${error.message}`);
+              return resolve(false);
             }
-            resolve(true);
-          } catch (err) {
+
             try {
-              await ctx.api.sendMessage(chatId, `❌ Gagal kirim video: ${err.message}`);
-            } catch (e) {}
-            // cleanup anyway
-            const dir = path.dirname(basePath);
-            const baseName = path.basename(basePath);
-            for (const file of fs.readdirSync(dir)) {
-              if (file.startsWith(baseName)) {
-                try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
+              await ctx.replyWithVideo(new InputFile(outputFile));
+
+              // cleanup
+              const dir = path.dirname(basePath);
+              const baseName = path.basename(basePath);
+              for (const file of fs.readdirSync(dir)) {
+                if (file.startsWith(baseName)) {
+                  fs.unlinkSync(path.join(dir, file));
+                }
               }
+
+              resolve(true);
+            } catch (err) {
+              await ctx.reply(`❌ Gagal kirim video: ${err.message}`);
+
+              // tetap cleanup
+              const dir = path.dirname(basePath);
+              const baseName = path.basename(basePath);
+              for (const file of fs.readdirSync(dir)) {
+                if (file.startsWith(baseName)) {
+                  fs.unlinkSync(path.join(dir, file));
+                }
+              }
+
+              resolve(false);
             }
-            resolve(false);
           }
-        });
+        );
       });
     }
 
@@ -393,28 +431,53 @@ module.exports = {
       await sendOrEditStatus("📡 Trying API 1...");
 
       if (isFacebook) {
-        const res1 = await axios.get(`${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+        const res1 = await axios.get(
+          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(
+            input
+          )}`,
+          { timeout: 10000 }
+        );
         const data1 = res1.data?.data;
-        if (!res1.data?.status || !data1) throw new Error("API 1 (Siputzx - Facebook) returned invalid response");
+        if (!res1.data?.status || !data1)
+          throw new Error(
+            "API 1 (Siputzx - Facebook) returned invalid response"
+          );
         await fbHandler1(ctx, chatId, data1);
         await deleteStatus();
         return;
       }
 
       if (isInstagram) {
-        const res1 = await axios.get(`${process.env.diioffc}/api/download/instagram?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+        const res1 = await axios.get(
+          `${
+            process.env.diioffc
+          }/api/download/instagram?url=${encodeURIComponent(input)}`,
+          { timeout: 10000 }
+        );
         const data1 = res1.data;
-        if (!data1?.status || !Array.isArray(data1.result) || data1.result.length === 0)
-          throw new Error("API 1 (diioffc - Instagram) returned invalid response");
+        if (
+          !data1?.status ||
+          !Array.isArray(data1.result) ||
+          data1.result.length === 0
+        )
+          throw new Error(
+            "API 1 (diioffc - Instagram) returned invalid response"
+          );
         await igHandler1(ctx, chatId, data1);
         await deleteStatus();
         return;
       }
 
       // TikTok API 1
-      const res1 = await axios.get(`${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+      const res1 = await axios.get(
+        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
+          input
+        )}`,
+        { timeout: 10000 }
+      );
       const data1 = res1.data?.result;
-      if (!res1.data?.status || !data1) throw new Error("API 1 (diioffc - Tiktok) returned invalid response");
+      if (!res1.data?.status || !data1)
+        throw new Error("API 1 (diioffc - Tiktok) returned invalid response");
       await tthandler1(ctx, chatId, { result: data1 });
       await deleteStatus();
       return;
@@ -424,27 +487,49 @@ module.exports = {
         await sendOrEditStatus("📡 API 1 failed. Trying API 2...");
 
         if (isFacebook) {
-          const res2 = await axios.get(`${process.env.archive}/api/download/facebook?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+          const res2 = await axios.get(
+            `${
+              process.env.archive
+            }/api/download/facebook?url=${encodeURIComponent(input)}`,
+            { timeout: 10000 }
+          );
           const result2 = res2.data?.result;
-          if (!res2.data?.status || !result2) throw new Error("API 2 (Archive - Facebook) returned invalid response");
+          if (!res2.data?.status || !result2)
+            throw new Error(
+              "API 2 (Archive - Facebook) returned invalid response"
+            );
           await fbHandler2(ctx, chatId, result2);
           await deleteStatus();
           return;
         }
 
         if (isInstagram) {
-          const res2 = await axios.get(`${process.env.archive}/api/download/instagram?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+          const res2 = await axios.get(
+            `${
+              process.env.archive
+            }/api/download/instagram?url=${encodeURIComponent(input)}`,
+            { timeout: 10000 }
+          );
           const data2 = res2.data;
-          if (!data2?.status || !data2.result) throw new Error("API 2 (Archive - Instagram) returned invalid response");
+          if (!data2?.status || !data2.result)
+            throw new Error(
+              "API 2 (Archive - Instagram) returned invalid response"
+            );
           await igHandler2(ctx, chatId, data2);
           await deleteStatus();
           return;
         }
 
         // TikTok API 2
-        const res2 = await axios.get(`${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+        const res2 = await axios.get(
+          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
+            input
+          )}`,
+          { timeout: 10000 }
+        );
         const result2 = res2.data?.result;
-        if (!res2.data?.status || !result2) throw new Error("API 2 (Archive - Tiktok) returned invalid response");
+        if (!res2.data?.status || !result2)
+          throw new Error("API 2 (Archive - Tiktok) returned invalid response");
         await tthandler2(ctx, chatId, result2);
         await deleteStatus();
         return;
@@ -454,27 +539,47 @@ module.exports = {
           await sendOrEditStatus("📡 API 2 failed. Trying API 3...");
 
           if (isFacebook) {
-            const res3 = await axios.get(`${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+            const res3 = await axios.get(
+              `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
+              { timeout: 10000 }
+            );
             const result3 = res3.data?.data;
-            if (!result3) throw new Error("API 3 (Vreden - Facebook) returned invalid response");
+            if (!result3)
+              throw new Error(
+                "API 3 (Vreden - Facebook) returned invalid response"
+              );
             await fbHandler3(ctx, chatId, result3);
             await deleteStatus();
             return;
           }
 
           if (isInstagram) {
-            const res3 = await axios.get(`${process.env.vreden}/api/igdownload?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+            const res3 = await axios.get(
+              `${process.env.vreden}/api/igdownload?url=${encodeURIComponent(
+                input
+              )}`,
+              { timeout: 10000 }
+            );
             const data3 = res3.data;
-            if (!data3?.status || !data3?.result) throw new Error("API 3 (Vreden - Instagram) returned invalid response");
+            if (!data3?.status || !data3?.result)
+              throw new Error(
+                "API 3 (Vreden - Instagram) returned invalid response"
+              );
             await igHandler3(ctx, chatId, data3);
             await deleteStatus();
             return;
           }
 
           // TikTok API 3
-          const res3 = await axios.get(`${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`, { timeout: 10000 });
+          const res3 = await axios.get(
+            `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
+            { timeout: 10000 }
+          );
           const result3 = res3.data?.result;
-          if (!res3.data?.status || !result3) throw new Error("API 3 (Vreden - Tiktok) returned invalid response");
+          if (!res3.data?.status || !result3)
+            throw new Error(
+              "API 3 (Vreden - Tiktok) returned invalid response"
+            );
           await tthandler3(ctx, chatId, result3);
           await deleteStatus();
           return;
@@ -483,7 +588,7 @@ module.exports = {
 
           try {
             await sendOrEditStatus("⚠️ All APIs failed. Fallback to yt-dlp...");
-            const success = await ytDlpFallback(ctx, chatId, input);
+            const success = await ytDlpFallback(ctx, input);
             if (!success) throw new Error("yt-dlp fallback failed.");
             await deleteStatus();
             return;
@@ -498,5 +603,5 @@ module.exports = {
         }
       }
     }
-  }
+  },
 };
