@@ -4,7 +4,7 @@ const { checkAnswer } = require("@/utils/games");
 
 const commands = new Map();
 
-// 🔁 Load semua command
+// 🔁 Load all commands
 function loadCommands(dir) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
@@ -29,7 +29,7 @@ async function handleMessage(ctx) {
   if (!ctx.message?.text) return;
   const text = ctx.message.text;
 
-  // Kalau command
+  // If the command
   if (text.startsWith("/")) {
     return handleCommand(ctx);
   }
@@ -44,7 +44,7 @@ async function handleMessage(ctx) {
     }
   }
 
-  // 🔎 Cek jawaban game
+  // 🔎 Check game answers
   await checkAnswer(ctx);
 }
 
@@ -62,7 +62,7 @@ function handleCommand(ctx) {
     command.execute(ctx, args);
   } catch (err) {
     console.error(`Error in command "${commandName}"`, err);
-    ctx.reply("⚠️ Terjadi error saat menjalankan command.");
+    ctx.reply("⚠️ An error occurred while executing the command.");
   }
 }
 
@@ -78,11 +78,11 @@ async function handleCallback(ctx) {
   const command = commands.get(commandPrefix);
 
   if (!command || typeof command.handleCallback !== "function") {
-    return ctx.answerCallbackQuery({ text: "❌ Aksi tidak dikenali." });
+    return ctx.answerCallbackQuery({ text: "❌ Unrecognized action." });
   }
 
   try {
-    // Pastikan query.message ada sebelum diteruskan
+    // Make sure query.message exists before forwarding
     if (!query.message) {
       return ctx.answerCallbackQuery({ text: "⚠️ Cannot handle inline message." });
     }
@@ -90,7 +90,7 @@ async function handleCallback(ctx) {
     await command.handleCallback(ctx, query);
   } catch (err) {
     console.error(`Error in callback "${data}"`, err);
-    ctx.answerCallbackQuery({ text: "⚠️ Terjadi error saat memproses aksi." });
+    ctx.answerCallbackQuery({ text: "⚠️ An error occurred while processing the action." });
   }
 }
 
