@@ -333,77 +333,78 @@ Downloads: ${data.stats?.download || "?"}`;
     };
 
     // helper fallback
-async function ytDlpFallback(bot, chatId, url) {
-  const outputDir = path.resolve(__dirname, "../../yt-dlp");
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  const timestamp = Date.now();
-  const rawOutput = path.join(outputDir, `video_${timestamp}`);
-  const outputFile = `${rawOutput}.mp4`; // hasil akhir video
-
-  return new Promise((resolve) => {
-    exec(
-      `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${rawOutput}.%(ext)s" "${url}"`,
-      async (error) => {
-        if (error) {
-          await bot.sendMessage(chatId, `❌ yt-dlp error: ${error.message}`);
-          return resolve(false);
-        }
-
-        try {
-          // cek apakah video berhasil terdownload
-          if (!fs.existsSync(outputFile)) {
-            await bot.sendMessage(chatId, "❌ Video file not found.");
-            return resolve(false);
-          }
-
-          // cari thumbnail sesuai prefix
-          const thumbFile = [`${rawOutput}.jpg`, `${rawOutput}.png`].find((f) =>
-            fs.existsSync(f)
-          );
-          let finalThumb;
-
-          if (thumbFile) {
-            finalThumb = `${rawOutput}_thumb.jpg`;
-            await new Promise((res) => {
-              exec(
-                `ffmpeg -y -i "${thumbFile}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${finalThumb}"`,
-                () => res()
-              );
-            });
-          }
-
-          // kirim video ke Telegram
-          await bot.sendVideo(chatId, outputFile, {
-            ...(finalThumb ? { thumb: finalThumb } : {}),
-          });
-
-          // hapus file setelah selesai
-          fs.unlinkSync(outputFile);
-          if (thumbFile && fs.existsSync(thumbFile)) fs.unlinkSync(thumbFile);
-          if (finalThumb && fs.existsSync(finalThumb)) fs.unlinkSync(finalThumb);
-
-          resolve(true);
-        } catch (err) {
-          await bot.sendMessage(
-            chatId,
-            `❌ Failed to send yt-dlp results: ${err.message}`
-          );
-          resolve(false);
-        }
+    async function ytDlpFallback(bot, chatId, url) {
+      const outputDir = path.resolve(__dirname, "../../yt-dlp");
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
       }
-    );
-  });
-}
+
+      const timestamp = Date.now();
+      const rawOutput = path.join(outputDir, `video_${timestamp}`);
+      const outputFile = `${rawOutput}.mp4`;
+
+      return new Promise((resolve) => {
+        exec(
+          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${rawOutput}.%(ext)s" "${url}"`,
+          async (error) => {
+            if (error) {
+              await bot.sendMessage(
+                chatId,
+                `❌ yt-dlp error: ${error.message}`
+              );
+              return resolve(false);
+            }
+
+            try {
+              if (!fs.existsSync(outputFile)) {
+                await bot.sendMessage(chatId, "❌ Video file not found.");
+                return resolve(false);
+              }
+
+              const thumbFile = [`${rawOutput}.jpg`, `${rawOutput}.png`].find(
+                (f) => fs.existsSync(f)
+              );
+              let finalThumb;
+
+              if (thumbFile) {
+                finalThumb = `${rawOutput}_thumb.jpg`;
+                await new Promise((res) => {
+                  exec(
+                    `ffmpeg -y -i "${thumbFile}" -vf "scale='min(320,iw)':'min(320,ih)':force_original_aspect_ratio=decrease" -q:v 3 "${finalThumb}"`,
+                    () => res()
+                  );
+                });
+              }
+
+              await bot.sendVideo(chatId, outputFile, {
+                ...(finalThumb ? { thumb: finalThumb } : {}),
+              });
+
+              fs.unlinkSync(outputFile);
+              if (thumbFile && fs.existsSync(thumbFile))
+                fs.unlinkSync(thumbFile);
+              if (finalThumb && fs.existsSync(finalThumb))
+                fs.unlinkSync(finalThumb);
+
+              resolve(true);
+            } catch (err) {
+              await bot.sendMessage(
+                chatId,
+                `❌ Failed to send yt-dlp results: ${err.message}`
+              );
+              resolve(false);
+            }
+          }
+        );
+      });
+    }
 
     try {
       await sendOrEditStatus("📡 Trying API 1...");
 
       if (isFacebook) {
         const res1 = await axios.get(
-          `${process.env.a}/api/d/facebook?url=${encodeURIComponent(
+          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(
             input
           )}`
         );
@@ -424,7 +425,7 @@ async function ytDlpFallback(bot, chatId, url) {
       if (isInstagram) {
         const res1 = await axios.get(
           `${
-            process.env.a
+            process.env.diioffc
           }/api/download/instagram?url=${encodeURIComponent(input)}`,
           { timeout: 8000 }
         );
@@ -446,7 +447,7 @@ async function ytDlpFallback(bot, chatId, url) {
       }
 
       const res1 = await axios.get(
-        `${process.env.a}/api/download/tiktok?url=${encodeURIComponent(
+        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
           input
         )}`
       );
@@ -468,7 +469,7 @@ async function ytDlpFallback(bot, chatId, url) {
         if (isFacebook) {
           const res2 = await axios.get(
             `${
-              process.env.a
+              process.env.archive
             }/api/download/facebook?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
@@ -485,7 +486,7 @@ async function ytDlpFallback(bot, chatId, url) {
         if (isInstagram) {
           const res2 = await axios.get(
             `${
-              process.env.a
+              process.env.archive
             }/api/download/instagram?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
@@ -500,7 +501,7 @@ async function ytDlpFallback(bot, chatId, url) {
         }
 
         const res2 = await axios.get(
-          `${process.env.a}/api/download/tiktok?url=${encodeURIComponent(
+          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
             input
           )}`,
           { timeout: 8000 }
@@ -519,7 +520,7 @@ async function ytDlpFallback(bot, chatId, url) {
 
           if (isFacebook) {
             const res3 = await axios.get(
-              `${process.env.a}/api/fbdl?url=${encodeURIComponent(input)}`,
+              `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
               { timeout: 8000 }
             );
             const result3 = res3.data?.data;
@@ -534,7 +535,7 @@ async function ytDlpFallback(bot, chatId, url) {
 
           if (isInstagram) {
             const res3 = await axios.get(
-              `${process.env.a}/api/igdownload?url=${encodeURIComponent(
+              `${process.env.vreden}/api/igdownload?url=${encodeURIComponent(
                 input
               )}`,
               { timeout: 8000 }
@@ -551,7 +552,7 @@ async function ytDlpFallback(bot, chatId, url) {
           }
 
           const res3 = await axios.get(
-            `${process.env.a}/api/tiktok?url=${encodeURIComponent(input)}`,
+            `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
           const result3 = res3.data?.result;
