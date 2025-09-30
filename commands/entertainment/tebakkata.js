@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
 const { setGame, getGame, clearGame } = require("@/utils/games");
+const tools = require("@/utils/api");
 
 module.exports = {
   name: "tebakkata",
@@ -15,13 +16,14 @@ module.exports = {
     if (subcommand === "surrender") {
       const game = getGame(chatId, "tebakkata");
       if (!game) {
-        return ctx.reply("⚠️ No Word Guess game is currently running in this chat.");
+        return ctx.reply(
+          "⚠️ No Word Guess game is currently running in this chat."
+        );
       }
 
-      await ctx.reply(
-        `🏳️ Game ended. The correct word was *${game.answer}*`,
-        { parse_mode: "Markdown" }
-      );
+      await ctx.reply(`🏳️ Game ended. The correct word was *${game.answer}*`, {
+        parse_mode: "Markdown",
+      });
 
       clearGame(chatId, "tebakkata");
       return;
@@ -35,9 +37,12 @@ module.exports = {
     }
 
     try {
-      const res = await axios.get(`${process.env.siputzx}/api/games/tebakkata`, {
-        timeout: 8000,
-      });
+      const res = await axios.get(
+        tools.createUrl("siputzx", "/api/games/tebakkata"),
+        {
+          timeout: 8000,
+        }
+      );
 
       const result = res.data;
       if (result?.status && result.data) {
