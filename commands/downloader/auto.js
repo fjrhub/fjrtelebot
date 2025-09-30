@@ -356,10 +356,10 @@ Downloads: ${data.stats?.download || "?"}`;
             }
 
             try {
-              // kirim hasil video
+              // send video results
               await bot.sendVideo(chatId, outputFile);
 
-              // cleanup semua file dengan prefix yang sama
+              // cleanup all files with the same prefix
               const dir = path.dirname(basePath);
               const baseName = path.basename(basePath);
 
@@ -376,7 +376,7 @@ Downloads: ${data.stats?.download || "?"}`;
                 `❌ Gagal kirim video: ${err.message}`
               );
 
-              // tetap cleanup meski gagal kirim
+              // keep cleanup even if delivery fails
               const dir = path.dirname(basePath);
               const baseName = path.basename(basePath);
 
