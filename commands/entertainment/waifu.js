@@ -34,7 +34,7 @@ module.exports = {
 
     try {
       await sendOrEditStatus("📡 Trying API 1...");
-      const res1 = await axios.get(tools.createUrl("waifupics", "/sfw/a"), {
+      const res1 = await axios.get(tools.createUrl("waifupics", "/sfw/waifu"), {
         timeout: 8000,
       });
       const imageUrl1 = res1.data?.url;
