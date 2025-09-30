@@ -563,7 +563,7 @@ Downloads: ${data.stats?.download || "?"}`;
           await tthandler3(result3);
           await deleteStatus();
         } catch (e3) {
-          console.error("❌ All APIs failed:", e3.message);
+          console.error("⚠️ API 3 failed:", e3.message);
 
           try {
             await sendOrEditStatus(`⚠️ All APIs failed. Fallback to yt-dlp...`);
@@ -572,7 +572,7 @@ Downloads: ${data.stats?.download || "?"}`;
             await deleteStatus();
           } catch (e4) {
             console.error(
-              "❌ All APIs failed. Trying yt-dlp fallback:",
+              "⚠️ All APIs failed. Trying yt-dlp fallback:",
               e4.message
             );
             await sendOrEditStatus(
