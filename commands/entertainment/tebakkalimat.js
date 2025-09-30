@@ -1,7 +1,7 @@
-// commands/tebakkalimat.js
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
 const { setGame, getGame, clearGame } = require("@/utils/games");
+const tools = require("@/utils/api");
 
 module.exports = {
   name: "tebakkalimat",
@@ -38,12 +38,11 @@ module.exports = {
 
     try {
       const res = await axios.get(
-        `${process.env.siputzx}/api/games/tebakkalimat`,
+        tools.createUrl("siputzx", "/api/games/tebakkalimat"),
         {
           timeout: 8000,
         }
       );
-
       const result = res.data;
       if (result?.status && result.data) {
         const question = result.data.soal;
