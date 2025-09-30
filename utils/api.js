@@ -1,6 +1,7 @@
 const APIs = {
     waifuim: "https://api.waifu.im",
     waifupics: "https://api.waifu.pics",
+    siputzx: "https://api.siputzx.my.id"
 };
 
 /**
