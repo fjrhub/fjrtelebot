@@ -4,7 +4,7 @@ const { Bot } = require("grammy");
 const { OWNER_ID, getWIBTime } = require("@/utils/helper");
 const { handleCallback, handleMessage } = require("@/handler");
 
-const bot = new Bot(process.env.BOT_TOKEN);
+const bot = new Bot(process.env.TOKEN);
 bot.on("message", ctx => handleMessage(ctx));
 bot.on("callback_query:data", ctx => handleCallback(ctx));
 bot.api.sendMessage(OWNER_ID, `Bot is now online!\nStarted at: ${getWIBTime()} WIB`);
