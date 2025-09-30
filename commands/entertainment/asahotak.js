@@ -43,7 +43,6 @@ module.exports = {
       if (result?.status && result.data) {
         const question = result.data.soal;
         const answer = result.data.jawaban;
-        console.log(answer)
 
         setGame(chatId, "asahotak", { answer });
 
