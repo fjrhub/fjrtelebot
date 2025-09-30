@@ -1,5 +1,5 @@
 {
-  "name": "grammy",
+  "name": "fjrtelebot",
   "version": "1.0.0",
   "scripts": {
     "start": "node index.js"
