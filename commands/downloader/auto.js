@@ -343,22 +343,17 @@ Downloads: ${data.stats?.download || "?"}`;
       const rawOutput = path.join(outputDir, `video_${timestamp}`);
       const outputFile = `${rawOutput}.mp4`;
 
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         exec(
           `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${rawOutput}.%(ext)s" "${url}"`,
           async (error) => {
-            if (error) {
-              await bot.sendMessage(
-                chatId,
-                `❌ yt-dlp error: ${error.message}`
-              );
-              return resolve(false);
-            }
-
             try {
+              if (error) {
+                return reject(new Error(`yt-dlp error: ${error.message}`));
+              }
+
               if (!fs.existsSync(outputFile)) {
-                await bot.sendMessage(chatId, "❌ Video file not found.");
-                return resolve(false);
+                return reject(new Error("yt-dlp video file not found"));
               }
 
               const thumbFile = [`${rawOutput}.jpg`, `${rawOutput}.png`].find(
@@ -388,11 +383,7 @@ Downloads: ${data.stats?.download || "?"}`;
 
               resolve(true);
             } catch (err) {
-              await bot.sendMessage(
-                chatId,
-                `❌ Failed to send yt-dlp results: ${err.message}`
-              );
-              resolve(false);
+              reject(new Error(`yt-dlp send error: ${err.message}`));
             }
           }
         );
@@ -571,13 +562,8 @@ Downloads: ${data.stats?.download || "?"}`;
             if (!success) throw new Error("yt-dlp fallback failed.");
             await deleteStatus();
           } catch (e4) {
-            console.error(
-              "⚠️ All APIs failed. Trying yt-dlp fallback:",
-              e4.message
-            );
-            await sendOrEditStatus(
-              "❌ All yt-dlp APIs and fallbacks fail to work."
-            );
+            console.error("❌ yt-dlp fallback failed:", e4.message);
+            await sendOrEditStatus("❌ All APIs and yt-dlp fallback failed.");
             await deleteStatus();
           }
         }
