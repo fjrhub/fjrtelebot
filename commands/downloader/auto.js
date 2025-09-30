@@ -353,7 +353,7 @@ Downloads: ${data.stats?.download || "?"}`;
             }
 
             try {
-              // cari file hasil download (video)
+              // search for downloaded files (videos)
               const files = fs
                 .readdirSync(outputDir)
                 .filter((f) => f.startsWith("video_"));
@@ -364,14 +364,14 @@ Downloads: ${data.stats?.download || "?"}`;
               if (!videoFile) {
                 await bot.sendMessage(
                   chatId,
-                  "❌ Tidak menemukan file video hasil yt-dlp."
+                  "❌ Not found the yt-dlp video file."
                 );
                 return resolve(false);
               }
 
               const latestFile = path.join(outputDir, videoFile);
 
-              // cari thumbnail
+              // search thumbnail
               const thumbFile = files.find((f) => f.match(/\.(jpg|png)$/i));
               let finalThumb = undefined;
 
@@ -393,12 +393,12 @@ Downloads: ${data.stats?.download || "?"}`;
                 finalThumb = resizedThumb;
               }
 
-              // kirim video (dengan atau tanpa thumbnail)
+              // send video (with or without thumbnail)
               await bot.sendVideo(chatId, latestFile, {
                 ...(finalThumb ? { thumb: finalThumb } : {}),
               });
 
-              // hapus file setelah kirim
+              // delete files after sending
               fs.unlinkSync(latestFile);
               if (thumbFile && fs.existsSync(path.join(outputDir, thumbFile)))
                 fs.unlinkSync(path.join(outputDir, thumbFile));
@@ -409,7 +409,7 @@ Downloads: ${data.stats?.download || "?"}`;
             } catch (err) {
               await bot.sendMessage(
                 chatId,
-                `❌ Gagal kirim hasil yt-dlp: ${err.message}`
+                `❌ Failed to send yt-dlp results: ${err.message}`
               );
               resolve(false);
             }
@@ -579,11 +579,9 @@ Downloads: ${data.stats?.download || "?"}`;
           await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
-          await sendOrEditStatus(`⚠️ Semua API gagal. Fallback ke yt-dlp...`);
-
+          await sendOrEditStatus(`⚠️ All APIs failed. Fallback to yt-dlp...`);
           // fallback ke yt-dlp
           await ytDlpFallback(bot, chatId, input);
-
           await deleteStatus();
         }
       }
