@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
 const { setGame, getGame, clearGame } = require("@/utils/games");
+const tools = require("@/utils/api");
 
 module.exports = {
   name: "whoami",
@@ -35,10 +36,11 @@ module.exports = {
 
     try {
       const res = await axios.get(
-        `${process.env.siputzx}/api/games/siapakahaku`,
-        { timeout: 8000 }
+        tools.createUrl("siputzx", "/api/games/siapakahaku"),
+        {
+          timeout: 8000,
+        }
       );
-
       const result = res.data;
       if (
         (result?.status === true || result?.status === "true") &&
