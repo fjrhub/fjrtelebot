@@ -67,8 +67,11 @@ function handleCommand(ctx) {
 }
 
 // 🎯 Handle callback
-function handleCallback(ctx) {
-  const data = ctx.callbackQuery?.data;
+async function handleCallback(ctx) {
+  const query = ctx.callbackQuery;
+  if (!query) return;
+
+  const data = query.data;
   if (!data) return;
 
   const [commandPrefix] = data.split(":");
@@ -79,7 +82,12 @@ function handleCallback(ctx) {
   }
 
   try {
-    command.handleCallback(ctx);
+    // Pastikan query.message ada sebelum diteruskan
+    if (!query.message) {
+      return ctx.answerCallbackQuery({ text: "⚠️ Cannot handle inline message." });
+    }
+
+    await command.handleCallback(ctx, query);
   } catch (err) {
     console.error(`Error in callback "${data}"`, err);
     ctx.answerCallbackQuery({ text: "⚠️ Terjadi error saat memproses aksi." });
