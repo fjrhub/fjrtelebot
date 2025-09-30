@@ -1,22 +1,16 @@
 {
-  "name": "fjrtelebot",
-  "version": "1.2.4",
-  "description": "",
-  "main": "index.js",
+  "name": "grammy",
+  "version": "1.0.0",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.17.0",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.3",
-    "axios": "^1.10.0",
-    "dotenv": "^16.3.1",
-    "groq-sdk": "^0.26.0",
-    "module-alias": "^2.2.3",
-    "node-telegram-bot-api": "^0.66.0"
+    "@supabase/supabase-js": "^2.57.4",
+    "axios": "^1.12.1",
+    "dotenv": "16.3.1",
+    "grammy": "^1.38.2",
+    "groq-sdk": "^0.32.0",
+    "module-alias": "^2.2.3"
   },
   "_moduleAliases": {
     "@": "./"
