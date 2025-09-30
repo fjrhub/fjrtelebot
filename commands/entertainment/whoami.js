@@ -14,7 +14,9 @@ module.exports = {
     if (text === "/whoami surrender") {
       const currentGame = getGame(chatId, "whoami");
       if (!currentGame) {
-        return ctx.reply("⚠️ No Who Am I game is currently running in this chat.");
+        return ctx.reply(
+          "⚠️ No Who Am I game is currently running in this chat."
+        );
       }
 
       await ctx.reply(
@@ -38,12 +40,12 @@ module.exports = {
       );
 
       const result = res.data;
-      console.log("WhoAmI API result:", result);
-
-      if ((result?.status === true || result?.status === "true") && result.data) {
+      if (
+        (result?.status === true || result?.status === "true") &&
+        result.data
+      ) {
         const question = result.data.soal;
         const answer = result.data.jawaban;
-        console.log(answer)
 
         setGame(chatId, "whoami", { answer });
 
