@@ -1,5 +1,3 @@
-// utils/games.js
-
 const games = {};
 
 // Simpan state game
@@ -27,14 +25,38 @@ async function checkAnswer(ctx) {
   if (!activeGames) return;
 
   for (const [gameName, gameData] of Object.entries(activeGames)) {
-    const correctAnswer = gameData.answer.toLowerCase();
-    if (text === correctAnswer) {
+    // 🧠 Normal single-answer game
+    if (gameData.answer && text === gameData.answer.toLowerCase()) {
       await ctx.reply(
         `✅ Correct! ${ctx.from.first_name} got it right!\nThe answer is *${gameData.answer}*`,
         { parse_mode: "Markdown" }
       );
       clearGame(chatId, gameName);
       return;
+    }
+
+    // 👨‍👩‍👧 Family100 (multi-answer)
+    if (gameData.answers) {
+      if (gameData.found.includes(text)) return; // sudah ditemukan
+
+      if (gameData.answers.includes(text)) {
+        gameData.found.push(text);
+
+        await ctx.reply(
+          `✅ ${ctx.from.first_name} found one: *${text}* (${gameData.found.length}/${gameData.answers.length})`,
+          { parse_mode: "Markdown" }
+        );
+
+        if (gameData.found.length === gameData.answers.length) {
+          await ctx.reply(
+            `🎉 All answers have been found!\nThe answers were:\n- ${gameData.answers.join("\n- ")}`,
+            { parse_mode: "Markdown" }
+          );
+          clearGame(chatId, gameName);
+        }
+
+        return;
+      }
     }
   }
 }
