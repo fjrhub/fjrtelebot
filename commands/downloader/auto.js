@@ -423,7 +423,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isFacebook) {
         const res1 = await axios.get(
-          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(input)}`
+          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(
+            input
+          )}`
         );
 
         const data1 = res1.data?.data;
@@ -441,9 +443,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
       if (isInstagram) {
         const res1 = await axios.get(
-          `${process.env.diioffc}/api/download/instagram?url=${encodeURIComponent(
-            input
-          )}`,
+          `${
+            process.env.diioffc
+          }/api/download/instagram?url=${encodeURIComponent(input)}`,
           { timeout: 8000 }
         );
         const data1 = res1.data;
@@ -464,7 +466,9 @@ Downloads: ${data.stats?.download || "?"}`;
       }
 
       const res1 = await axios.get(
-        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(input)}`
+        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
+          input
+        )}`
       );
       const data1 = res1.data?.result;
       if (!res1.data?.status || !data1) {
@@ -483,9 +487,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
         if (isFacebook) {
           const res2 = await axios.get(
-            `${process.env.archive}/api/download/facebook?url=${encodeURIComponent(
-              input
-            )}`,
+            `${
+              process.env.archive
+            }/api/download/facebook?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
           const result2 = res2.data?.result;
@@ -500,9 +504,9 @@ Downloads: ${data.stats?.download || "?"}`;
 
         if (isInstagram) {
           const res2 = await axios.get(
-            `${process.env.archive}/api/download/instagram?url=${encodeURIComponent(
-              input
-            )}`,
+            `${
+              process.env.archive
+            }/api/download/instagram?url=${encodeURIComponent(input)}`,
             { timeout: 8000 }
           );
           const data2 = res2.data;
@@ -579,10 +583,22 @@ Downloads: ${data.stats?.download || "?"}`;
           await deleteStatus();
         } catch (e3) {
           console.error("❌ All APIs failed:", e3.message);
-          await sendOrEditStatus(`⚠️ All APIs failed. Fallback to yt-dlp...`);
-          // fallback ke yt-dlp
-          await ytDlpFallback(bot, chatId, input);
-          await deleteStatus();
+
+          try {
+            await sendOrEditStatus(`⚠️ All APIs failed. Fallback to yt-dlp...`);
+            const success = await ytDlpFallback(bot, chatId, input);
+            if (!success) throw new Error("yt-dlp fallback failed.");
+            await deleteStatus();
+          } catch (e4) {
+            console.error(
+              "❌ All APIs failed. Trying yt-dlp fallback:",
+              e4.message
+            );
+            await sendOrEditStatus(
+              "❌ All yt-dlp APIs and fallbacks fail to work."
+            );
+            await deleteStatus();
+          }
         }
       }
     }
