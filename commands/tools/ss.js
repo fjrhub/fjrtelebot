@@ -46,7 +46,7 @@ module.exports = {
     };
 
     const screenshotVreden = async (url) => {
-      const apiUrl = `${process.env.vreden}/api/ssweb?url=${encodeURIComponent(url)}&type=tablet`;
+      const apiUrl = `${process.env.vreden}/api/v1/tools/screenshot?url=${encodeURIComponent(url)}&type=phone`;
       const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
       if (!res.data) throw new Error("API1 returned empty data.");
       return res.data;
