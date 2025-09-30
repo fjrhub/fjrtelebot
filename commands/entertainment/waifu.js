@@ -1,5 +1,6 @@
 const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
+const tools = require("@/utils/api");
 
 module.exports = {
   name: "waifu",
@@ -33,14 +34,19 @@ module.exports = {
 
     try {
       await sendOrEditStatus("📡 Trying API 1...");
-      const res1 = await axios.get(`${process.env.waifupics}/sfw/waifu`, { timeout: 8000 });
+      const res1 = await axios.get(tools.createUrl("waifupics", "/sfw/a"), {
+        timeout: 8000,
+      });
       const imageUrl1 = res1.data?.url;
       if (!imageUrl1) throw new Error("API 1 returned an invalid response.");
       await sendPhoto(imageUrl1);
     } catch {
       try {
         await sendOrEditStatus("📡 Trying API 2...");
-        const res2 = await axios.get(`${process.env.waifuim}/search?included_tags=waifu`, { timeout: 8000 });
+        const res2 = await axios.get(
+          tools.createUrl("waifuim", "/search?included_tags=waifu"),
+          { timeout: 8000 }
+        );
         const imageUrl2 = res2.data?.images?.[0]?.url;
         if (!imageUrl2) throw new Error("API 2 returned an invalid response.");
         await sendPhoto(imageUrl2);
