@@ -1,5 +1,6 @@
 require("dotenv").config();
 require("module-alias/register");
+require("@/utils/api");
 const { Bot } = require("grammy");
 const { OWNER_ID, getWIBTime } = require("@/utils/helper");
 const { handleCallback, handleMessage } = require("@/handler");
