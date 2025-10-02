@@ -1,6 +1,5 @@
 const { isAuthorized } = require("@/utils/helper");
 const axios = require("axios");
-const tools = require("@/utils/api");
 
 module.exports = {
   name: "waifupics",
@@ -11,7 +10,7 @@ module.exports = {
 
     try {
       const response = await axios.get(
-        tools.createUrl("waifupics", "/sfw/waifu"),
+        createUrl("waifupics", "/sfw/waifu"),
         { timeout: 8000 }
       );
       const imageUrl = response.data?.url;
