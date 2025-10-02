@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { isAuthorized } = require("@/utils/helper");
 const { setGame, getGame, clearGame } = require("@/utils/games");
-const tools = require("@/utils/api");
 
 module.exports = {
   name: "susunkata",
@@ -39,7 +38,7 @@ module.exports = {
 
     try {
       const res = await axios.get(
-        tools.createUrl("siputzx", "/api/games/susunkata"),
+        createUrl("siputzx", "/api/games/susunkata"),
         {
           timeout: 8000,
         }
