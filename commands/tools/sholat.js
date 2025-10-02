@@ -12,14 +12,22 @@ module.exports = {
     try {
       const { weekday, day, month, year, currentTime } = getJakartaTimeParts();
 
-      const apiUrl = `${process.env.myquran}/v2/sholat/jadwal/1635/${year}/${month}/${day}`;
-      const response = await axios.get(apiUrl);
+      const response = await axios.get(
+        createUrl("myquran", `/v2/sholat/jadwal/1635/${year}/${month}/${day}`),
+        { timeout: 8000 }
+      );
 
       if (!response.data?.data?.jadwal) {
-        return ctx.reply("⚠️ Schedule data not found or the API is currently unavailable.");
+        return ctx.reply(
+          "⚠️ Schedule data not found or the API is currently unavailable."
+        );
       }
 
-      const { lokasi: location, daerah: region, jadwal: schedule } = response.data.data;
+      const {
+        lokasi: location,
+        daerah: region,
+        jadwal: schedule,
+      } = response.data.data;
 
       const convertToMinutes = (time) => {
         const [hour, minute] = time.split(":").map(Number);
@@ -44,14 +52,18 @@ module.exports = {
 
       for (let i = 0; i < prayerTimes.length; i++) {
         if (prayerTimes[i].time > nowInMinutes) {
-          lastPrayer = prayerTimes[i - 1] || prayerTimes[prayerTimes.length - 1];
+          lastPrayer =
+            prayerTimes[i - 1] || prayerTimes[prayerTimes.length - 1];
           nextPrayer = prayerTimes[i];
           break;
         }
       }
 
       if (!nextPrayer) {
-        nextPrayer = { name: "Next Imsak", time: convertToMinutes(schedule.imsak) + 24 * 60 };
+        nextPrayer = {
+          name: "Next Imsak",
+          time: convertToMinutes(schedule.imsak) + 24 * 60,
+        };
       }
 
       if (!lastPrayer) {
@@ -72,10 +84,14 @@ module.exports = {
 
       let additionalInfo = "";
       if (timeSinceLastPrayer >= 0) {
-        additionalInfo += `🕰️ ${lastPrayer.name} passed ${formatDuration(timeSinceLastPrayer)} ago.\n`;
+        additionalInfo += `🕰️ ${lastPrayer.name} passed ${formatDuration(
+          timeSinceLastPrayer
+        )} ago.\n`;
       }
       if (timeUntilNextPrayer >= 0) {
-        additionalInfo += `⏳ ${nextPrayer.name} in ${formatDuration(timeUntilNextPrayer)}.`;
+        additionalInfo += `⏳ ${nextPrayer.name} in ${formatDuration(
+          timeUntilNextPrayer
+        )}.`;
       }
 
       const message = `📅 ${weekday}, ${day}/${month}/${year}
