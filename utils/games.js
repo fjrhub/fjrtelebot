@@ -1,22 +1,22 @@
 const games = {};
 
-// Simpan state game
+// Save state game
 function setGame(chatId, gameName, data) {
   if (!games[chatId]) games[chatId] = {};
   games[chatId][gameName] = data;
 }
 
-// Ambil state game
+// Get state game
 function getGame(chatId, gameName) {
   return games[chatId]?.[gameName];
 }
 
-// Hapus state game
+// Delete state game
 function clearGame(chatId, gameName) {
   if (games[chatId]) delete games[chatId][gameName];
 }
 
-// Cek jawaban semua game aktif
+// Check the answers to all active games
 async function checkAnswer(ctx) {
   const chatId = ctx.chat.id;
   const text = ctx.message.text.trim().toLowerCase();
@@ -37,7 +37,7 @@ async function checkAnswer(ctx) {
 
     // 👨‍👩‍👧 Family100 (multi-answer)
     if (gameData.answers) {
-      if (gameData.found.includes(text)) return; // sudah ditemukan
+      if (gameData.found.includes(text)) return;
 
       if (gameData.answers.includes(text)) {
         gameData.found.push(text);
