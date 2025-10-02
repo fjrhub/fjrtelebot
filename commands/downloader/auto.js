@@ -432,10 +432,13 @@ module.exports = {
 
       if (isFacebook) {
         const res1 = await axios.get(
-          `${process.env.siputzx}/api/d/facebook?url=${encodeURIComponent(
-            input
-          )}`,
-          { timeout: 10000 }
+          createUrl(
+            "siputzx",
+            `/api/d/facebook?url=${encodeURIComponent(input)}`
+          ),
+          {
+            timeout: 8000,
+          }
         );
         const data1 = res1.data?.data;
         if (!res1.data?.status || !data1)
