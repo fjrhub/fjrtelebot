@@ -1,4 +1,4 @@
-START_CMD="pnpm run dev"
+START_CMD="node index.js"
 
 echo "[$(date +'%H:%M:%S')] Starting Telegram bot..."
 $START_CMD &
