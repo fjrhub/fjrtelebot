@@ -11,6 +11,7 @@ const {
 
 module.exports = {
   name: "status",
+  strict: true,
   description: "Show bot status including uptime, memory, system, and platform",
 
   getCPUInfo() {
