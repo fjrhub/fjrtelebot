@@ -48,15 +48,24 @@ async function handleMessage(ctx) {
   await checkAnswer(ctx);
 }
 
-// 🛠️ Handle command
 function handleCommand(ctx) {
   const text = ctx.message.text;
   if (!text.startsWith("/")) return;
 
   const args = text.slice(1).trim().split(/ +/);
-  const commandName = args.shift().toLowerCase();
+  let commandName = args.shift().toLowerCase();
+
+  const atIndex = commandName.indexOf("@");
+  if (atIndex !== -1) {
+    commandName = commandName.slice(0, atIndex);
+  }
+
   const command = commands.get(commandName);
   if (!command) return;
+
+  if (command.strict && args.length > 0) {
+    return;
+  }
 
   try {
     command.execute(ctx, args);
