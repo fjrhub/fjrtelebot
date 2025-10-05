@@ -17,6 +17,13 @@ module.exports = {
 
     if (!isAuthorized(replyChatId)) return;
 
+    const text = ctx.message.text?.trim();
+    const botUsername = ctx.me.username;
+
+    // ✅ hanya izinkan /ai atau /ai@BotName + opsional spasi + isi
+    const commandRegex = new RegExp(`^/ai(@${botUsername})?(\\s.*)?$`, "i");
+    if (!commandRegex.test(text)) return;
+
     // ID untuk penyimpanan history
     let dbChatId;
     if (ctx.chat.type === "private") {
@@ -25,8 +32,7 @@ module.exports = {
       dbChatId = `${ctx.chat.id}:${ctx.from.id}`;
     }
 
-    const text = ctx.message.text?.trim();
-    if (!text || text === "/ai") {
+    if (text === "/ai" || text === `/ai@${botUsername}`) {
       return ctx.reply(
         `<b>Welcome to AI Chat</b>\n\n` +
           `Type your question after <code>/ai</code>, for example:\n` +
