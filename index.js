@@ -9,4 +9,4 @@ const bot = new Bot(process.env.TOKEN);
 bot.on("message", (ctx) => handleMessage(ctx));
 bot.on("callback_query:data", (ctx) => handleCallback(ctx));
 bot.api.sendMessage(OWNER_ID,`Bot is now online!\nStarted at: ${getWIBTime()} WIB`);
-bot.start();
+bot.start({ timeout: 1800 });
