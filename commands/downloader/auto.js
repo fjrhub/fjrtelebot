@@ -451,39 +451,43 @@ module.exports = {
       }
 
       if (isInstagram) {
-        const res1 = await axios.get(
-          `${
-            process.env.diioffc
-          }/api/download/instagram?url=${encodeURIComponent(input)}`,
-          { timeout: 10000 }
-        );
-        const data1 = res1.data;
-        if (
-          !data1?.status ||
-          !Array.isArray(data1.result) ||
-          data1.result.length === 0
-        )
-          throw new Error(
-            "API 1 (diioffc - Instagram) returned invalid response"
-          );
-        await igHandler1(ctx, chatId, data1);
-        await deleteStatus();
-        return;
+        // const res1 = await axios.get(
+        //   `${
+        //     process.env.diioffc
+        //   }/api/download/instagram?url=${encodeURIComponent(input)}`,
+        //   { timeout: 10000 }
+        // );
+        // const data1 = res1.data;
+        // if (
+        //   !data1?.status ||
+        //   !Array.isArray(data1.result) ||
+        //   data1.result.length === 0
+        // )
+        //   throw new Error(
+        //     "API 1 (diioffc - Instagram) returned invalid response"
+        //   );
+        // await igHandler1(ctx, chatId, data1);
+        // await deleteStatus();
+        // return;
+        throw new Error("❌ API 1 returned invalid response");
+
       }
 
       // TikTok API 1
-      const res1 = await axios.get(
-        `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
-          input
-        )}`,
-        { timeout: 10000 }
-      );
-      const data1 = res1.data?.result;
-      if (!res1.data?.status || !data1)
-        throw new Error("API 1 (diioffc - Tiktok) returned invalid response");
-      await tthandler1(ctx, chatId, { result: data1 });
-      await deleteStatus();
-      return;
+      // const res1 = await axios.get(
+      //   `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
+      //     input
+      //   )}`,
+      //   { timeout: 10000 }
+      // );
+      // const data1 = res1.data?.result;
+      // if (!res1.data?.status || !data1)
+      //   throw new Error("API 1 (diioffc - Tiktok) returned invalid response");
+      // await tthandler1(ctx, chatId, { result: data1 });
+      // await deleteStatus();
+      // return;
+      throw new Error("❌ API 1 returned invalid response");
+
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1?.message);
       try {
