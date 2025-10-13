@@ -3,7 +3,8 @@ const APIs = {
     waifupics: "https://api.waifu.pics",
     siputzx: "https://api.siputzx.my.id",
     myquran: "https://api.myquran.com",
-    diioffc: "https://api.diioffc.web.id"
+    diioffc: "https://api.diioffc.web.id",
+    archive: "https://archive.lick.eu.org"
 };
 
 function createUrl(name, path) {
