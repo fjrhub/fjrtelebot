@@ -263,6 +263,7 @@ module.exports = {
       if (!data) throw new Error("Invalid FB API 2 format.");
       const videoUrl = data.media?.[2] || data.media?.[0] || null;
       if (!videoUrl) throw new Error("No HD video URL found in API 2.");
+      await ctx.api.sendMessage(chatId, videoUrl);
       await ctx.api.sendVideo(chatId, videoUrl);
     };
 
@@ -493,10 +494,13 @@ module.exports = {
 
         if (isFacebook) {
           const res2 = await axios.get(
-            `${
-              process.env.archive
-            }/api/download/facebook?url=${encodeURIComponent(input)}`,
-            { timeout: 10000 }
+            createUrl(
+              "archive",
+              `/api/download/facebook?url=${encodeURIComponent(input)}`
+            ),
+            {
+              timeout: 8000,
+            }
           );
           const result2 = res2.data?.result;
           if (!res2.data?.status || !result2)
