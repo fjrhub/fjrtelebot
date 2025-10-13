@@ -276,23 +276,30 @@ module.exports = {
 
     // Instagram handlers
     const igHandler1 = async (ctx, chatId, data) => {
-      if (!data || !Array.isArray(data.result))
-        throw new Error("Invalid IG API 1 format.");
-      const results = data.result;
-      if (!results.length) throw new Error("IG API 1 returned empty media.");
+      if (!data || !Array.isArray(data.data))
+        throw new Error(
+          "Invalid API format: data field not found or not array."
+        );
 
+      const results = data.data;
+      if (!results.length) throw new Error("API returned empty media list.");
+
+      // Ambil semua URL valid
       const urls = results.map((i) => i?.url).filter(Boolean);
-      if (!urls.length) throw new Error("No valid media URLs in IG API 1.");
+      if (!urls.length) throw new Error("No valid media URLs found.");
 
+      // Cek apakah ada video (file .mp4)
       const video = urls.find((u) => u.includes(".mp4"));
       const photos = urls.filter((u) => !u.includes(".mp4"));
 
       if (video) {
+        // Kirim video
         await ctx.api.sendVideo(chatId, video);
         return;
       }
 
       if (photos.length) {
+        // Kirim foto (maksimal 10 per grup)
         const groups = chunkArray(photos, 10);
         for (const grp of groups) {
           const mediaGroup = grp.map((url) => ({ type: "photo", media: url }));
@@ -301,7 +308,7 @@ module.exports = {
         return;
       }
 
-      throw new Error("IG API 1 returned unsupported media.");
+      throw new Error("No media content detected.");
     };
 
     const igHandler2 = async (ctx, chatId, data) => {
@@ -452,25 +459,23 @@ module.exports = {
       }
 
       if (isInstagram) {
-        // const res1 = await axios.get(
-        //   `${
-        //     process.env.diioffc
-        //   }/api/download/instagram?url=${encodeURIComponent(input)}`,
-        //   { timeout: 10000 }
-        // );
-        // const data1 = res1.data;
-        // if (
-        //   !data1?.status ||
-        //   !Array.isArray(data1.result) ||
-        //   data1.result.length === 0
-        // )
-        //   throw new Error(
-        //     "API 1 (diioffc - Instagram) returned invalid response"
-        //   );
-        // await igHandler1(ctx, chatId, data1);
-        // await deleteStatus();
-        // return;
-        throw new Error("❌ API 1 returned invalid response");
+        const res1 = await axios.get(
+          createUrl(
+            "siputzx",
+            `/api/d/igdl?url=${encodeURIComponent(input)}`
+          ),
+          { timeout: 8000 }
+        );
+
+        const data1 = res1.data;
+        if (!data1?.status || !Array.isArray(data1.data))
+          throw new Error(
+            "API 1 (Siputzx - Instagram) returned invalid response"
+          );
+
+        await igHandler1(ctx, chatId, data1);
+        await deleteStatus();
+        return;
       }
 
       // TikTok API 1
