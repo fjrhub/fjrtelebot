@@ -109,19 +109,26 @@ module.exports = {
 
   const { download, metadata } = data.data;
 
-  // Ambil URL video atau foto
   const videos = Array.isArray(download.video) ? download.video.filter(Boolean) : [];
   const photos = Array.isArray(download.photo) ? download.photo.filter(Boolean) : [];
 
   if (!videos.length && !photos.length)
     throw new Error("No downloadable media found from TikTok API.");
 
+  // Ambil statistik
+  const stats = metadata?.stats || {};
+  const like = stats.likeCount || 0;
+  const play = stats.playCount || 0;
+  const comment = stats.commentCount || 0;
+  const share = stats.shareCount || 0;
+
+  // Format caption (pakai emoji + format singkat)
+  const caption = `❤️ ${formatNumber(like)} ▶️ ${formatNumber(play)} 💬 ${formatNumber(comment)} ↗️ ${formatNumber(share)}`;
+
   // Jika ada video
   if (videos.length) {
-    const firstVideo = videos[0]; // kirim yang pertama saja untuk efisiensi
-    await ctx.api.sendVideo(chatId, firstVideo, {
-      caption: metadata?.description || "🎬 TikTok Video"
-    });
+    const firstVideo = videos[0];
+    await ctx.api.sendVideo(chatId, firstVideo, { caption });
     return;
   }
 
@@ -129,15 +136,24 @@ module.exports = {
   if (photos.length) {
     const groups = chunkArray(photos, 10);
     for (const grp of groups) {
-      const mediaGroup = grp.map((url) => ({
+      const mediaGroup = grp.map((url, i) => ({
         type: "photo",
         media: url,
+        caption: i === 0 ? caption : undefined, // caption hanya di foto pertama
       }));
       await ctx.api.sendMediaGroup(chatId, mediaGroup);
     }
     return;
   }
 };
+
+// Fungsi bantu untuk mempersingkat angka
+const formatNumber = (num) => {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
+
 
 
     const tthandler2 = async (ctx, chatId, data) => {
