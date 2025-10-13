@@ -104,53 +104,41 @@ module.exports = {
 
     // TikTok handler variations
     const tthandler1 = async (ctx, chatId, data) => {
-      if (!data || typeof data !== "object" || !data.result) {
-        throw new Error("Invalid data format: missing expected properties.");
-      }
-      const r = data.result;
-      const playCount = r.play_count || 0;
-      const commentCount = r.comment_count || 0;
-      const shareCount = r.share_count || 0;
-      const downloadCount = r.download_count || 0;
-      const sizeInBytes = r.hd_size || 0;
+  if (!data?.data || !data.data.download)
+    throw new Error("Invalid TikTok API response structure.");
 
-      const caption = [
-        `Play Count: ${toNumberFormat(playCount)}`,
-        `Comment Count: ${toNumberFormat(commentCount)}`,
-        `Share Count: ${toNumberFormat(shareCount)}`,
-        `Download Count: ${toNumberFormat(downloadCount)}`,
-        `Size: ${formatSize(sizeInBytes)}`,
-      ].join("\n");
+  const { download, metadata } = data.data;
 
-      const images = Array.isArray(r.images) ? r.images : [];
+  // Ambil URL video atau foto
+  const videos = Array.isArray(download.video) ? download.video.filter(Boolean) : [];
+  const photos = Array.isArray(download.photo) ? download.photo.filter(Boolean) : [];
 
-      if (images.length > 0) {
-        const groups = chunkArray(images, 10);
-        for (const grp of groups) {
-          const mediaGroup = grp.map((url, idx) => ({
-            type: "photo",
-            media: url,
-            ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
-          }));
-          await ctx.api.sendMediaGroup(chatId, mediaGroup);
-        }
-        return;
-      }
+  if (!videos.length && !photos.length)
+    throw new Error("No downloadable media found from TikTok API.");
 
-      const hdPlayUrl = r.hdplay || r.play || r.wmplay;
-      if (
-        !hdPlayUrl ||
-        typeof hdPlayUrl !== "string" ||
-        !hdPlayUrl.startsWith("http")
-      ) {
-        throw new Error("Invalid HD play URL from API.");
-      }
-      await ctx.api.sendVideo(chatId, hdPlayUrl, {
-        caption,
-        parse_mode: "Markdown",
-        supports_streaming: true,
-      });
-    };
+  // Jika ada video
+  if (videos.length) {
+    const firstVideo = videos[0]; // kirim yang pertama saja untuk efisiensi
+    await ctx.api.sendVideo(chatId, firstVideo, {
+      caption: metadata?.description || "🎬 TikTok Video"
+    });
+    return;
+  }
+
+  // Jika ada foto
+  if (photos.length) {
+    const groups = chunkArray(photos, 10);
+    for (const grp of groups) {
+      const mediaGroup = grp.map((url) => ({
+        type: "photo",
+        media: url,
+      }));
+      await ctx.api.sendMediaGroup(chatId, mediaGroup);
+    }
+    return;
+  }
+};
+
 
     const tthandler2 = async (ctx, chatId, data) => {
       if (!data || typeof data !== "object" || !data.metadata) {
@@ -460,10 +448,7 @@ module.exports = {
 
       if (isInstagram) {
         const res1 = await axios.get(
-          createUrl(
-            "siputzx",
-            `/api/d/igdl?url=${encodeURIComponent(input)}`
-          ),
+          createUrl("siputzx", `/api/d/igdl?url=${encodeURIComponent(input)}`),
           { timeout: 8000 }
         );
 
@@ -478,20 +463,21 @@ module.exports = {
         return;
       }
 
-      // TikTok API 1
-      // const res1 = await axios.get(
-      //   `${process.env.diioffc}/api/download/tiktok?url=${encodeURIComponent(
-      //     input
-      //   )}`,
-      //   { timeout: 10000 }
-      // );
-      // const data1 = res1.data?.result;
-      // if (!res1.data?.status || !data1)
-      //   throw new Error("API 1 (diioffc - Tiktok) returned invalid response");
-      // await tthandler1(ctx, chatId, { result: data1 });
-      // await deleteStatus();
-      // return;
-      throw new Error("❌ API 1 returned invalid response");
+      const res = await axios.get(
+        createUrl(
+          "siputzx",
+          `/api/d/tiktok/v2?url=${encodeURIComponent(input)}`
+        ),
+        { timeout: 8000 }
+      );
+
+      const data = res.data;
+      if (!data?.status || !data?.data)
+        throw new Error("API (Siputzx - TikTok) returned invalid response");
+
+      await tthandler1(ctx, chatId, data);
+      await deleteStatus();
+      return;
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1?.message);
       try {
