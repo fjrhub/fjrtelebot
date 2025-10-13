@@ -470,7 +470,6 @@ module.exports = {
         // await deleteStatus();
         // return;
         throw new Error("❌ API 1 returned invalid response");
-
       }
 
       // TikTok API 1
@@ -487,7 +486,6 @@ module.exports = {
       // await deleteStatus();
       // return;
       throw new Error("❌ API 1 returned invalid response");
-
     } catch (e1) {
       console.warn("⚠️ API 1 failed:", e1?.message);
       try {
@@ -529,10 +527,10 @@ module.exports = {
 
         // TikTok API 2
         const res2 = await axios.get(
-          `${process.env.archive}/api/download/tiktok?url=${encodeURIComponent(
-            input
-          )}`,
-          { timeout: 10000 }
+          createUrl("archive", `/api/download/tiktok?url=${encodeURIComponent(input)}`),
+          {
+            timeout: 8000,
+          }
         );
         const result2 = res2.data?.result;
         if (!res2.data?.status || !result2)
