@@ -510,10 +510,13 @@ module.exports = {
 
         if (isInstagram) {
           const res2 = await axios.get(
-            `${
-              process.env.archive
-            }/api/download/instagram?url=${encodeURIComponent(input)}`,
-            { timeout: 10000 }
+            createUrl(
+              "archive",
+              `/api/download/instagram?url=${encodeURIComponent(input)}`
+            ),
+            {
+              timeout: 8000,
+            }
           );
           const data2 = res2.data;
           if (!data2?.status || !data2.result)
@@ -527,7 +530,10 @@ module.exports = {
 
         // TikTok API 2
         const res2 = await axios.get(
-          createUrl("archive", `/api/download/tiktok?url=${encodeURIComponent(input)}`),
+          createUrl(
+            "archive",
+            `/api/download/tiktok?url=${encodeURIComponent(input)}`
+          ),
           {
             timeout: 8000,
           }
