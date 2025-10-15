@@ -101,17 +101,25 @@ module.exports = {
     };
 
     async function getWithTimeout(url, timeoutMs = 8000) {
+      const start = Date.now(); // ⏱️ mulai hitung waktu
+
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
         const res = await axios.get(url, { signal: controller.signal });
         clearTimeout(timer);
+
+        const duration = ((Date.now() - start) / 1000).toFixed(2);
+        console.log(`✅ API fetched in ${duration}s`);
         return res;
       } catch (err) {
+        const duration = ((Date.now() - start) / 1000).toFixed(2);
         if (err.name === "AbortError") {
-          throw new Error(`Request timeout setelah ${timeoutMs / 1000} detik`);
+          console.warn(`⚠️ API request timed out after ${duration}s`);
+          throw new Error(`Request timeout after ${timeoutMs / 1000} seconds`);
         }
+        console.error(`❌ API fetch failed after ${duration}s: ${err.message}`);
         throw err;
       }
     }
