@@ -103,7 +103,12 @@ module.exports = {
     // -------------------- HANDLERS --------------------
 
     // TikTok handler variations
-    const tthandler1 = async (ctx, chatId, data) => {
+// Fungsi delay
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const tthandler1 = async (ctx, chatId, data) => {
   if (!data?.data || !data.data.download)
     throw new Error("Invalid TikTok API response structure.");
 
@@ -128,24 +133,50 @@ module.exports = {
   // Jika ada video
   if (videos.length) {
     const firstVideo = videos[0];
-    await ctx.api.sendVideo(chatId, firstVideo, { caption });
+    try {
+      await ctx.api.sendVideo(chatId, firstVideo, { caption });
+    } catch (e) {
+      console.error("Gagal kirim video:", e.message);
+    }
     return;
   }
 
   // Jika ada foto
   if (photos.length) {
     const groups = chunkArray(photos, 10);
+
     for (const grp of groups) {
       const mediaGroup = grp.map((url, i) => ({
         type: "photo",
         media: url,
         caption: i === 0 ? caption : undefined, // caption hanya di foto pertama
       }));
-      await ctx.api.sendMediaGroup(chatId, mediaGroup);
+
+      let success = false;
+      while (!success) {
+        try {
+          await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          success = true;
+        } catch (e) {
+          // Tangani rate limit (429)
+          if (e.error_code === 429 || e.description?.includes("Too Many Requests")) {
+            const match = e.description.match(/retry after (\d+)/i);
+            const waitSec = match ? parseInt(match[1]) : 5;
+            console.warn(`⚠️ Rate limit: tunggu ${waitSec} detik sebelum kirim lagi...`);
+            await delay(waitSec * 1000);
+          } else {
+            console.error("Gagal kirim media group:", e.message);
+            success = true; // keluar loop biar tidak terus-terusan
+          }
+        }
+      }
+
+      // Tambahkan delay antar batch biar aman (misalnya 2 detik)
+      await delay(2000);
     }
-    return;
   }
 };
+
 
 // Fungsi bantu untuk mempersingkat angka
 const formatNumber = (num) => {
