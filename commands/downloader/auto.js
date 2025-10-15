@@ -100,92 +100,116 @@ module.exports = {
       return result;
     };
 
+    async function getWithTimeout(url, timeoutMs = 8000) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        const res = await axios.get(url, { signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+      } catch (err) {
+        if (err.name === "AbortError") {
+          throw new Error(`Request timeout setelah ${timeoutMs / 1000} detik`);
+        }
+        throw err;
+      }
+    }
+
     // -------------------- HANDLERS --------------------
 
     // TikTok handler variations
-// Fungsi delay
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-const tthandler1 = async (ctx, chatId, data) => {
-  if (!data?.data || !data.data.download)
-    throw new Error("Invalid TikTok API response structure.");
-
-  const { download, metadata } = data.data;
-
-  const videos = Array.isArray(download.video) ? download.video.filter(Boolean) : [];
-  const photos = Array.isArray(download.photo) ? download.photo.filter(Boolean) : [];
-
-  if (!videos.length && !photos.length)
-    throw new Error("No downloadable media found from TikTok API.");
-
-  // Ambil statistik
-  const stats = metadata?.stats || {};
-  const like = stats.likeCount || 0;
-  const play = stats.playCount || 0;
-  const comment = stats.commentCount || 0;
-  const share = stats.shareCount || 0;
-
-  // Format caption (pakai emoji + format singkat)
-  const caption = `❤️ ${formatNumber(like)} ▶️ ${formatNumber(play)} 💬 ${formatNumber(comment)} ↗️ ${formatNumber(share)}`;
-
-  // Jika ada video
-  if (videos.length) {
-    const firstVideo = videos[0];
-    try {
-      await ctx.api.sendVideo(chatId, firstVideo, { caption });
-    } catch (e) {
-      console.error("Gagal kirim video:", e.message);
+    // Fungsi delay
+    function delay(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
     }
-    return;
-  }
 
-  // Jika ada foto
-  if (photos.length) {
-    const groups = chunkArray(photos, 10);
+    const tthandler1 = async (ctx, chatId, data) => {
+      if (!data?.data || !data.data.download)
+        throw new Error("Invalid TikTok API response structure.");
 
-    for (const grp of groups) {
-      const mediaGroup = grp.map((url, i) => ({
-        type: "photo",
-        media: url,
-        caption: i === 0 ? caption : undefined, // caption hanya di foto pertama
-      }));
+      const { download, metadata } = data.data;
 
-      let success = false;
-      while (!success) {
+      const videos = Array.isArray(download.video)
+        ? download.video.filter(Boolean)
+        : [];
+      const photos = Array.isArray(download.photo)
+        ? download.photo.filter(Boolean)
+        : [];
+
+      if (!videos.length && !photos.length)
+        throw new Error("No downloadable media found from TikTok API.");
+
+      // Ambil statistik
+      const stats = metadata?.stats || {};
+      const like = stats.likeCount || 0;
+      const play = stats.playCount || 0;
+      const comment = stats.commentCount || 0;
+      const share = stats.shareCount || 0;
+
+      // Format caption (pakai emoji + format singkat)
+      const caption = `❤️ ${formatNumber(like)} ▶️ ${formatNumber(
+        play
+      )} 💬 ${formatNumber(comment)} ↗️ ${formatNumber(share)}`;
+
+      // Jika ada video
+      if (videos.length) {
+        const firstVideo = videos[0];
         try {
-          await ctx.api.sendMediaGroup(chatId, mediaGroup);
-          success = true;
+          await ctx.api.sendVideo(chatId, firstVideo, { caption });
         } catch (e) {
-          // Tangani rate limit (429)
-          if (e.error_code === 429 || e.description?.includes("Too Many Requests")) {
-            const match = e.description.match(/retry after (\d+)/i);
-            const waitSec = match ? parseInt(match[1]) : 5;
-            console.warn(`⚠️ Rate limit: tunggu ${waitSec} detik sebelum kirim lagi...`);
-            await delay(waitSec * 1000);
-          } else {
-            console.error("Gagal kirim media group:", e.message);
-            success = true; // keluar loop biar tidak terus-terusan
-          }
+          console.error("Gagal kirim video:", e.message);
         }
+        return;
       }
 
-      // Tambahkan delay antar batch biar aman (misalnya 2 detik)
-      await delay(2000);
-    }
-  }
-};
+      // Jika ada foto
+      if (photos.length) {
+        const groups = chunkArray(photos, 10);
 
+        for (const grp of groups) {
+          const mediaGroup = grp.map((url, i) => ({
+            type: "photo",
+            media: url,
+            caption: i === 0 ? caption : undefined, // caption hanya di foto pertama
+          }));
 
-// Fungsi bantu untuk mempersingkat angka
-const formatNumber = (num) => {
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
-  return num.toString();
-};
+          let success = false;
+          while (!success) {
+            try {
+              await ctx.api.sendMediaGroup(chatId, mediaGroup);
+              success = true;
+            } catch (e) {
+              // Tangani rate limit (429)
+              if (
+                e.error_code === 429 ||
+                e.description?.includes("Too Many Requests")
+              ) {
+                const match = e.description.match(/retry after (\d+)/i);
+                const waitSec = match ? parseInt(match[1]) : 5;
+                console.warn(
+                  `⚠️ Rate limit: tunggu ${waitSec} detik sebelum kirim lagi...`
+                );
+                await delay(waitSec * 1000);
+              } else {
+                console.error("Gagal kirim media group:", e.message);
+                success = true; // keluar loop biar tidak terus-terusan
+              }
+            }
+          }
 
+          // Tambahkan delay antar batch biar aman (misalnya 2 detik)
+          await delay(2000);
+        }
+      }
+    };
 
+    // Fungsi bantu untuk mempersingkat angka
+    const formatNumber = (num) => {
+      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+      if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+      return num.toString();
+    };
 
     const tthandler2 = async (ctx, chatId, data) => {
       if (!data || typeof data !== "object" || !data.metadata) {
@@ -510,18 +534,19 @@ const formatNumber = (num) => {
         return;
       }
 
-      const res = await axios.get(
+      const res = await getWithTimeout(
         createUrl(
           "siputzx",
           `/api/d/tiktok/v2?url=${encodeURIComponent(input)}`
         ),
-        { timeout: 8000 }
+        8000 // timeout hanya untuk API
       );
 
       const data = res.data;
       if (!data?.status || !data?.data)
         throw new Error("API (Siputzx - TikTok) returned invalid response");
 
+      // Proses kirim boleh lama, tidak terpengaruh timeout
       await tthandler1(ctx, chatId, data);
       await deleteStatus();
       return;
