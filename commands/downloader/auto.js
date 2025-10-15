@@ -80,17 +80,6 @@ module.exports = {
         ? "0"
         : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-    function formatSize(bytes) {
-      if (!bytes && bytes !== 0) return "0 B";
-      bytes = Number(bytes);
-      if (Number.isNaN(bytes)) return "0 B";
-      if (bytes < 1024) return bytes + " B";
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
-      if (bytes < 1024 * 1024 * 1024)
-        return (bytes / (1024 * 1024)).toFixed(2) + " MB";
-      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
-    }
-
     const chunkArray = (arr, size) => {
       if (!Array.isArray(arr)) return [];
       const result = [];
@@ -124,14 +113,14 @@ module.exports = {
       }
     }
 
-    // -------------------- HANDLERS --------------------
-
-    // TikTok handler variations
     // Fungsi delay
     function delay(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    // -------------------- HANDLERS --------------------
+
+    // TikTok handler variations
     const tthandler1 = async (ctx, chatId, data) => {
       if (!data?.data || !data.data.download)
         throw new Error("Invalid TikTok API response structure.");
