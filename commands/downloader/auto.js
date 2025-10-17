@@ -151,11 +151,12 @@ module.exports = {
 
       // Jika ada video
       if (videos.length) {
-        const firstVideo = videos[0];
+        const firstVideo = videos[1];
         try {
           await ctx.api.sendVideo(chatId, firstVideo, { caption });
         } catch (e) {
           console.error("Gagal kirim video:", e.message);
+          throw e; // ⬅️ tambahkan ini agar error dilempar keluar
         }
         return;
       }
@@ -191,6 +192,7 @@ module.exports = {
               } else {
                 console.error("Gagal kirim media group:", e.message);
                 success = true; // keluar loop biar tidak terus-terusan
+                throw e; // ⬅️ tambahkan ini agar error dilempar keluar
               }
             }
           }
