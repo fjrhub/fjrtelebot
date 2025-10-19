@@ -357,12 +357,28 @@ module.exports = {
       }
 
       if (photos.length) {
-        // Kirim foto (maksimal 10 per grup)
+        // Fungsi delay sederhana
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        // Bagi foto menjadi grup berisi maksimal 10 item
         const groups = chunkArray(photos, 10);
+
         for (const grp of groups) {
           const mediaGroup = grp.map((url) => ({ type: "photo", media: url }));
-          await ctx.api.sendMediaGroup(chatId, mediaGroup);
+
+          try {
+            await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          } catch (err) {
+            console.error(
+              "Gagal kirim media group:",
+              err.description || err.message
+            );
+          }
+
+          // Delay 1.5 detik sebelum kirim grup berikutnya
+          await delay(1500);
         }
+
         return;
       }
 
