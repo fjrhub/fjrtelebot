@@ -397,16 +397,18 @@ module.exports = {
     };
 
     const igHandler2 = async (ctx, chatId, data) => {
-      if (!data || typeof data !== "object")
+      if (!data || typeof data !== "object") {
         throw new Error("Invalid IG API 2 format.");
+      }
+
       const result = data.result || {};
       const mediaUrls = Array.isArray(result.url)
         ? result.url
         : typeof result.url === "string"
         ? [result.url]
         : [];
-      const isVideo = !!result.isVideo;
 
+      const isVideo = !!result.isVideo;
       const caption = `${toNumberFormat(result.like)} Likes`;
 
       if (isVideo && mediaUrls.length) {
@@ -420,14 +422,18 @@ module.exports = {
 
       if (!isVideo && mediaUrls.length) {
         const groups = chunkArray(mediaUrls, 10);
+
         for (const grp of groups) {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
             ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
+
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          await delay(1500); // delay hanya di foto
         }
+
         return;
       }
 
