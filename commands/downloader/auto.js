@@ -66,7 +66,7 @@ module.exports = {
 
     const deleteStatus = async () => {
       if (statusMessage) {
-        await new Promise((res) => setTimeout(res, 1000));
+        await new Promise((res) => setTimeout(res, 5000));
         try {
           await ctx.api.deleteMessage(chatId, statusMessage.message_id);
         } catch (e) {
@@ -494,7 +494,7 @@ module.exports = {
       });
     }
 
-    async function ytDlpFallback(ctx, url) {
+    async function ytDlpFallback(ctx, url, sendOrEditStatus) {
       // 🌐 resolve redirect TikTok (misal vt.tiktok.com)
       const resolvedUrl = await resolveRedirect(url);
 
@@ -503,7 +503,7 @@ module.exports = {
         /\.(jpg|jpeg|png|webp|gif)$/i.test(resolvedUrl) ||
         resolvedUrl.includes("/photo/")
       ) {
-        await ctx.reply(
+        await sendOrEditStatus(
           "📸 Detected TikTok photo post — skip yt-dlp fallback."
         );
         return false;
@@ -523,7 +523,7 @@ module.exports = {
           `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -o "${basePath}.%(ext)s" "${resolvedUrl}"`,
           async (error) => {
             if (error) {
-              await ctx.reply(`❌ yt-dlp error: ${error.message}`);
+              await sendOrEditStatus(`❌ yt-dlp error: ${error.message}`);
               return resolve(false);
             }
 
@@ -532,7 +532,7 @@ module.exports = {
               fs.unlinkSync(outputFile);
               resolve(true);
             } catch (err) {
-              await ctx.reply(`❌ Gagal kirim video: ${err.message}`);
+              await sendOrEditStatus(`❌ Gagal kirim video: ${err.message}`);
               fs.unlinkSync(outputFile);
               resolve(false);
             }
@@ -714,8 +714,13 @@ module.exports = {
 
           try {
             await sendOrEditStatus("⚠️ All APIs failed. Fallback to yt-dlp...");
-            const success = await ytDlpFallback(ctx, input);
-            if (!success) throw new Error("yt-dlp fallback failed.");
+            const success = await ytDlpFallback(ctx, input, sendOrEditStatus);
+
+            if (success === false) {
+              await deleteStatus();
+              return; // Jangan lempar error kalau memang skip foto
+            }
+
             await deleteStatus();
             return;
           } catch (e4) {
