@@ -116,6 +116,13 @@ module.exports = {
     // Fungsi delay sederhana
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+    // Fungsi bantu untuk mempersingkat angka
+    const formatNumber = (num) => {
+      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+      if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+      return num.toString();
+    };
+
     // -------------------- HANDLERS --------------------
 
     // TikTok handler variations
@@ -188,13 +195,6 @@ module.exports = {
           await delay(1500);
         }
       }
-    };
-
-    // Fungsi bantu untuk mempersingkat angka
-    const formatNumber = (num) => {
-      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-      if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
-      return num.toString();
     };
 
     const tthandler2 = async (ctx, chatId, data) => {
