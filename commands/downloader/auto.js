@@ -113,10 +113,8 @@ module.exports = {
       }
     }
 
-    // Fungsi delay
-    function delay(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
+    // Fungsi delay sederhana
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     // -------------------- HANDLERS --------------------
 
@@ -172,33 +170,22 @@ module.exports = {
             caption: i === 0 ? caption : undefined, // caption hanya di foto pertama
           }));
 
-          let success = false;
-          while (!success) {
-            try {
-              await ctx.api.sendMediaGroup(chatId, mediaGroup);
-              success = true;
-            } catch (e) {
-              // Tangani rate limit (429)
-              if (
-                e.error_code === 429 ||
-                e.description?.includes("Too Many Requests")
-              ) {
-                const match = e.description.match(/retry after (\d+)/i);
-                const waitSec = match ? parseInt(match[1]) : 5;
-                console.warn(
-                  `⚠️ Rate limit: tunggu ${waitSec} detik sebelum kirim lagi...`
-                );
-                await delay(waitSec * 1000);
-              } else {
-                console.error("Gagal kirim media group:", e.message);
-                success = true; // keluar loop biar tidak terus-terusan
-                throw e; // ⬅️ tambahkan ini agar error dilempar keluar
-              }
+          try {
+            await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          } catch (e) {
+            if (
+              e.error_code === 429 ||
+              e.description?.includes("Too Many Requests")
+            ) {
+              console.warn("⚠️ Rate limited! Waiting 5 seconds...");
+              await delay(5000); // tunggu 5 detik kalau rate limit
+            } else {
+              console.error("❌ Gagal kirim media group:", e.message);
             }
           }
 
-          // Tambahkan delay antar batch biar aman (misalnya 2 detik)
-          await delay(2000);
+          // Delay 1.5 detik antar batch kiriman
+          await delay(1500);
         }
       }
     };
@@ -357,9 +344,6 @@ module.exports = {
       }
 
       if (photos.length) {
-        // Fungsi delay sederhana
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
         // Bagi foto menjadi grup berisi maksimal 10 item
         const groups = chunkArray(photos, 10);
 
