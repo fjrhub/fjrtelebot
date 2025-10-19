@@ -267,6 +267,7 @@ module.exports = {
       if (!data || typeof data !== "object") {
         throw new Error("Invalid API 3 data.");
       }
+
       const photos = Array.isArray(data.data)
         ? data.data.filter((item) => item.type === "photo")
         : [];
@@ -292,14 +293,18 @@ module.exports = {
           photos.map((p) => p.url),
           10
         );
+
         for (const grp of groups) {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
             ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
+
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          await delay(1500); // Delay hanya untuk kirim foto
         }
+
         return;
       }
 
