@@ -5,6 +5,7 @@ const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const { InputFile } = require("grammy");
+const https = require("https");
 
 module.exports = {
   name: "auto",
@@ -478,7 +479,36 @@ module.exports = {
     };
 
     // helper fallback
+    // fungsi untuk resolve redirect URL (vt.tiktok → www.tiktok)
+    function resolveRedirect(url) {
+      return new Promise((resolve) => {
+        https
+          .get(url, (res) => {
+            if (res.headers.location) {
+              resolve(res.headers.location);
+            } else {
+              resolve(url);
+            }
+          })
+          .on("error", () => resolve(url));
+      });
+    }
+
     async function ytDlpFallback(ctx, url) {
+      // 🌐 resolve redirect TikTok (misal vt.tiktok.com)
+      const resolvedUrl = await resolveRedirect(url);
+
+      // 🖼 skip jika ternyata post foto
+      if (
+        /\.(jpg|jpeg|png|webp|gif)$/i.test(resolvedUrl) ||
+        resolvedUrl.includes("/photo/")
+      ) {
+        await ctx.reply(
+          "📸 Detected TikTok photo post — skip yt-dlp fallback."
+        );
+        return false;
+      }
+
       return new Promise((resolve) => {
         const outputDir = path.resolve(__dirname, "../../yt-dlp");
         if (!fs.existsSync(outputDir)) {
@@ -490,7 +520,7 @@ module.exports = {
         const outputFile = `${basePath}.mp4`;
 
         exec(
-          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 --write-thumbnail -o "${basePath}.%(ext)s" "${url}"`,
+          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -o "${basePath}.%(ext)s" "${resolvedUrl}"`,
           async (error) => {
             if (error) {
               await ctx.reply(`❌ yt-dlp error: ${error.message}`);
@@ -499,29 +529,11 @@ module.exports = {
 
             try {
               await ctx.replyWithVideo(new InputFile(outputFile));
-
-              // cleanup
-              const dir = path.dirname(basePath);
-              const baseName = path.basename(basePath);
-              for (const file of fs.readdirSync(dir)) {
-                if (file.startsWith(baseName)) {
-                  fs.unlinkSync(path.join(dir, file));
-                }
-              }
-
+              fs.unlinkSync(outputFile);
               resolve(true);
             } catch (err) {
               await ctx.reply(`❌ Gagal kirim video: ${err.message}`);
-
-              // tetap cleanup
-              const dir = path.dirname(basePath);
-              const baseName = path.basename(basePath);
-              for (const file of fs.readdirSync(dir)) {
-                if (file.startsWith(baseName)) {
-                  fs.unlinkSync(path.join(dir, file));
-                }
-              }
-
+              fs.unlinkSync(outputFile);
               resolve(false);
             }
           }
