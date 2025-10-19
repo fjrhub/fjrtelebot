@@ -444,12 +444,15 @@ module.exports = {
       const mediaItems = Array.isArray(data?.result?.response?.data)
         ? data.result.response.data
         : [];
-      if (!mediaItems.length)
+
+      if (!mediaItems.length) {
         throw new Error("IG API 3 returned empty media array.");
+      }
 
       const images = mediaItems
         .filter((i) => i.type === "image")
         .map((i) => i.url);
+
       const videos = mediaItems
         .filter((i) => i.type === "video")
         .map((i) => i.url);
@@ -466,6 +469,7 @@ module.exports = {
         for (const grp of groups) {
           const mediaGroup = grp.map((u) => ({ type: "photo", media: u }));
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          await delay(1500); // delay hanya untuk foto
         }
         return;
       }
