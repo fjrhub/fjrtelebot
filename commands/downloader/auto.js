@@ -22,7 +22,7 @@ module.exports = {
     const instagramRegex =
       /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/(reel|p|tv)\/[A-Za-z0-9_-]+\/?(?:\?[^ ]*)?$/i;
     const facebookRegex =
-      /^(?:https?:\/\/)?(?:www\.|web\.)?facebook\.com\/(?:share\/(?:r|v)\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
+      /^(?:https?:\/\/)?(?:www\.|web\.)?facebook\.com\/(?:share\/(?:r|v|p)\/|reel\/|watch\?v=|permalink\.php\?story_fbid=|[^\/]+\/posts\/|video\.php\?v=)[^\s]+$/i;
 
     const isTikTok = tiktokRegex.test(text);
     const isInstagram = instagramRegex.test(text);
@@ -495,49 +495,75 @@ module.exports = {
     }
 
     async function ytDlpFallback(ctx, url, sendOrEditStatus) {
-      // 🌐 resolve redirect TikTok (misal vt.tiktok.com)
-      const resolvedUrl = await resolveRedirect(url);
+      // 🌐 Langsung ambil URL input tanpa resolveRedirect()
+      const resolvedUrl = url.trim();
 
-      // 🖼 skip jika ternyata post foto
+      // Deteksi platform
+      const isTikTok = resolvedUrl.includes("tiktok.com");
+      const isInstagram = resolvedUrl.includes("instagram.com");
+      const isFacebook = resolvedUrl.includes("facebook.com");
+
+      console.log("🔍 [ytDlpFallback] URL dari input:", resolvedUrl);
+
+      // 📸 Skip semua jenis URL foto / non-video
       if (
         /\.(jpg|jpeg|png|webp|gif)$/i.test(resolvedUrl) ||
-        resolvedUrl.includes("/photo/")
+        resolvedUrl.includes("/photo/") ||
+        resolvedUrl.includes("/p/") ||
+        resolvedUrl.includes("/share/p/") ||
+        resolvedUrl.includes("/unsupportedbrowser") ||
+        resolvedUrl.includes("?_fb_noscript") ||
+        resolvedUrl.includes("/help/") ||
+        resolvedUrl.includes("/login/") ||
+        resolvedUrl.includes("/checkpoint/")
       ) {
+        console.log("🧩 Reason: Detected invalid or non-video page");
         await sendOrEditStatus(
-          "📸 Detected TikTok photo post — skip yt-dlp fallback."
+          "⚠️ URL bukan video (foto atau halaman tidak valid) — skip yt-dlp fallback."
         );
         return false;
       }
 
+      // 📁 Pastikan folder output ada
+      const outputDir = path.resolve(__dirname, "../../yt-dlp");
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+
+      const timestamp = Date.now();
+      const basePath = path.join(outputDir, `video_${timestamp}`);
+      const outputFile = `${basePath}.mp4`;
+
+      // 🎥 Tentukan command sesuai platform
+      let cmd;
+      if (isFacebook) {
+        cmd = `yt-dlp -o "${basePath}.%(ext)s" "${resolvedUrl}"`;
+      } else {
+        cmd = `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -o "${basePath}.%(ext)s" "${resolvedUrl}"`;
+      }
+
+      console.log("🚀 [ytDlpFallback] Executing command:", cmd);
+
+      // 🚀 Jalankan yt-dlp
       return new Promise((resolve) => {
-        const outputDir = path.resolve(__dirname, "../../yt-dlp");
-        if (!fs.existsSync(outputDir)) {
-          fs.mkdirSync(outputDir, { recursive: true });
-        }
-
-        const timestamp = Date.now();
-        const basePath = path.join(outputDir, `video_${timestamp}`);
-        const outputFile = `${basePath}.mp4`;
-
-        exec(
-          `yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -o "${basePath}.%(ext)s" "${resolvedUrl}"`,
-          async (error) => {
-            if (error) {
-              await sendOrEditStatus(`❌ yt-dlp error: ${error.message}`);
-              return resolve(false);
-            }
-
-            try {
-              await ctx.replyWithVideo(new InputFile(outputFile));
-              fs.unlinkSync(outputFile);
-              resolve(true);
-            } catch (err) {
-              await sendOrEditStatus(`❌ Gagal kirim video: ${err.message}`);
-              fs.unlinkSync(outputFile);
-              resolve(false);
-            }
+        exec(cmd, async (error) => {
+          if (error) {
+            console.error("❌ yt-dlp error:", error.message);
+            await sendOrEditStatus(`❌ yt-dlp error: ${error.message}`);
+            return resolve(false);
           }
-        );
+
+          try {
+            await ctx.replyWithVideo(new InputFile(outputFile));
+            fs.unlinkSync(outputFile);
+            resolve(true);
+          } catch (err) {
+            console.error("❌ Gagal kirim video:", err.message);
+            await sendOrEditStatus(`❌ Gagal kirim video: ${err.message}`);
+            fs.unlinkSync(outputFile);
+            resolve(false);
+          }
+        });
       });
     }
 
