@@ -201,6 +201,7 @@ module.exports = {
       if (!data || typeof data !== "object" || !data.metadata) {
         throw new Error("Invalid data format: metadata missing.");
       }
+
       const md = data.metadata;
       const statsOnly = [
         `Views: ${toNumberFormat(md.view)}`,
@@ -213,29 +214,50 @@ module.exports = {
         md.durasi && md.durasi > 0 ? `Duration: ${md.durasi}s\n` : ""
       }${statsOnly}`;
 
+      // Jika ada image slide
       if (
         Array.isArray(data.media?.image_slide) &&
         data.media.image_slide.length > 0
       ) {
         const groups = chunkArray(data.media.image_slide, 10);
+
         for (const grp of groups) {
           const mediaGroup = grp.map((url, idx) => ({
             type: "photo",
             media: url,
             ...(idx === 0 ? { caption, parse_mode: "Markdown" } : {}),
           }));
-          await ctx.api.sendMediaGroup(chatId, mediaGroup);
+
+          try {
+            await ctx.api.sendMediaGroup(chatId, mediaGroup);
+          } catch (err) {
+            console.error(
+              "⚠️ Failed to send media group:",
+              err.description || err.message
+            );
+          }
+
+          // Delay 1.5 detik antar batch kiriman foto
+          await delay(1500);
         }
         return;
       }
 
+      // Jika ada video
       if (data.media?.play && md.durasi > 0) {
-        await ctx.api.sendVideo(chatId, data.media.play, {
-          caption,
-          parse_mode: "Markdown",
-          supports_streaming: true,
-        });
-        return;
+        try {
+          await ctx.api.sendVideo(chatId, data.media.play, {
+            caption,
+            parse_mode: "Markdown",
+            supports_streaming: true,
+          });
+        } catch (err) {
+          console.error(
+            "⚠️ Failed to send video:",
+            err.description || err.message
+          );
+        }
+        return; // tanpa delay di bagian video
       }
 
       throw new Error("API 2 returned no valid downloadable content.");
