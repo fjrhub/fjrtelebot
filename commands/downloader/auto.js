@@ -340,10 +340,19 @@ module.exports = {
     };
 
     const fbHandler3 = async (ctx, chatId, data) => {
-      if (!data) throw new Error("Invalid FB API 3 format.");
-      const videoUrl = data.hd_url || data.sd_url;
-      if (!videoUrl) throw new Error("No video URL found in API 3.");
-      await ctx.api.sendVideo(chatId, videoUrl);
+      if (!data?.result?.download?.hd)
+        throw new Error("Tidak ada URL video HD dari API 3 (Vreden).");
+
+      const videoUrl = data.result.download.hd;
+      const durasion = data.result.durasi || "Video durasion";
+      const thumb = data.result.thumbnail;
+
+      // Kirim video dengan caption dan thumbnail (jika ada)
+      await ctx.api.sendVideo(chatId, videoUrl, {
+        caption: `Duration: ${durasion}s`,
+        parse_mode: "Markdown",
+        thumbnail: thumb,
+      });
     };
 
     // Instagram handlers
@@ -691,14 +700,21 @@ module.exports = {
 
           if (isFacebook) {
             const res3 = await axios.get(
-              `${process.env.vreden}/api/fbdl?url=${encodeURIComponent(input)}`,
-              { timeout: 10000 }
+              createUrl(
+                "vreden",
+                `/api/v1/download/facebook?url=${encodeURIComponent(input)}`
+              ),
+              {
+                timeout: 8000,
+              }
             );
-            const result3 = res3.data?.data;
-            if (!result3)
+
+            const result3 = res3.data;
+            if (!result3?.status || !result3.result)
               throw new Error(
-                "API 3 (Vreden - Facebook) returned invalid response"
+                "API 3 (Vreden - Facebook) mengembalikan respons tidak valid."
               );
+
             await fbHandler3(ctx, chatId, result3);
             await deleteStatus();
             return;
@@ -736,26 +752,27 @@ module.exports = {
           return;
         } catch (e3) {
           console.error("⚠️ API 3 failed:", e3?.message);
+          await deleteStatus();
 
-          try {
-            await sendOrEditStatus("⚠️ All APIs failed. Fallback to yt-dlp...");
-            const success = await ytDlpFallback(ctx, input, sendOrEditStatus);
+          // try {
+          //   await sendOrEditStatus("⚠️ All APIs failed. Fallback to yt-dlp...");
+          //   const success = await ytDlpFallback(ctx, input, sendOrEditStatus);
 
-            if (success === false) {
-              await deleteStatus();
-              return; // Jangan lempar error kalau memang skip foto
-            }
+          //   if (success === false) {
+          //     await deleteStatus();
+          //     return; // Jangan lempar error kalau memang skip foto
+          //   }
 
-            await deleteStatus();
-            return;
-          } catch (e4) {
-            console.error("❌ yt-dlp fallback failed:", e4?.message);
-            try {
-              await sendOrEditStatus("❌ All APIs and yt-dlp fallback failed.");
-            } catch (e) {}
-            await deleteStatus();
-            return;
-          }
+          //   await deleteStatus();
+          //   return;
+          // } catch (e4) {
+          //   console.error("❌ yt-dlp fallback failed:", e4?.message);
+          //   try {
+          //     await sendOrEditStatus("❌ All APIs and yt-dlp fallback failed.");
+          //   } catch (e) {}
+          //   await deleteStatus();
+          //   return;
+          // }
         }
       }
     }
