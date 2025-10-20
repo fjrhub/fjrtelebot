@@ -336,7 +336,6 @@ module.exports = {
       if (!data) throw new Error("Invalid FB API 2 format.");
       const videoUrl = data.media?.[2] || data.media?.[0] || null;
       if (!videoUrl) throw new Error("No HD video URL found in API 2.");
-      await ctx.api.sendMessage(chatId, videoUrl);
       await ctx.api.sendVideo(chatId, videoUrl);
     };
 
