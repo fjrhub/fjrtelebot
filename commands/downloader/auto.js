@@ -273,22 +273,24 @@ module.exports = {
         ? data.data.filter((item) => item.type === "photo")
         : [];
       const video = Array.isArray(data.data)
-        ? data.data.find((item) => item.type === "nowatermark")
+        ? data.data.find(
+            (item) =>
+              item.type === "nowatermark" || item.type === "nowatermark_hd"
+          )
         : null;
 
-      const statsOnly = [
-        `Views: ${data.stats?.views ?? "?"}`,
-        `Comments: ${data.stats?.comment ?? "?"}`,
-        `Shares: ${data.stats?.share ?? "?"}`,
-        `Downloads: ${data.stats?.download ?? "?"}`,
+      const stats = data.stats || {};
+      const statsText = [
+        `👁 Views: ${stats.views ?? "?"}`,
+        `❤️ Likes: ${stats.likes ?? "?"}`,
+        `💬 Comments: ${stats.comment ?? "?"}`,
+        `🔁 Shares: ${stats.share ?? "?"}`,
+        `⬇️ Downloads: ${stats.download ?? "?"}`,
       ].join("\n");
 
-      const caption = `${
-        data.durations && data.durations > 0
-          ? `Duration: ${data.durations}s\n`
-          : ""
-      }${statsOnly}`;
+      const caption = `${statsText}`;
 
+      // Jika foto
       if (photos.length > 0) {
         const groups = chunkArray(
           photos.map((p) => p.url),
@@ -303,13 +305,14 @@ module.exports = {
           }));
 
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
-          await delay(1500); // Delay hanya untuk kirim foto
+          await delay(1500); // Delay kecil untuk Telegram rate limit
         }
 
         return;
       }
 
-      if (video?.url && data.durations > 0) {
+      // Jika video
+      if (video?.url) {
         await ctx.api.sendVideo(chatId, video.url, {
           caption,
           parse_mode: "Markdown",
@@ -773,14 +776,19 @@ module.exports = {
 
           // TikTok API 3
           const res3 = await axios.get(
-            `${process.env.vreden}/api/tiktok?url=${encodeURIComponent(input)}`,
-            { timeout: 10000 }
+            createUrl(
+              "vreden",
+              `/api/v1/download/tiktok?url=${encodeURIComponent(input)}`
+            )
           );
+
           const result3 = res3.data?.result;
-          if (!res3.data?.status || !result3)
+          if (!res3.data?.status || !result3) {
             throw new Error(
-              "API 3 (Vreden - Tiktok) returned invalid response"
+              "API 3 (Vreden - TikTok) returned invalid response"
             );
+          }
+
           await tthandler3(ctx, chatId, result3);
           await deleteStatus();
           return;
