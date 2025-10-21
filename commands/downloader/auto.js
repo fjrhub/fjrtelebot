@@ -794,27 +794,26 @@ module.exports = {
           return;
         } catch (e3) {
           console.error("⚠️ API 3 failed:", e3?.message);
-          await deleteStatus();
 
-          // try {
-          //   await sendOrEditStatus("⚠️ All APIs failed. Fallback to yt-dlp...");
-          //   const success = await ytDlpFallback(ctx, input, sendOrEditStatus);
+          try {
+            await sendOrEditStatus("⚠️ All APIs failed. Fallback to yt-dlp...");
+            const success = await ytDlpFallback(ctx, input, sendOrEditStatus);
 
-          //   if (success === false) {
-          //     await deleteStatus();
-          //     return; // Jangan lempar error kalau memang skip foto
-          //   }
+            if (success === false) {
+              await deleteStatus();
+              return; // Jangan lempar error kalau memang skip foto
+            }
 
-          //   await deleteStatus();
-          //   return;
-          // } catch (e4) {
-          //   console.error("❌ yt-dlp fallback failed:", e4?.message);
-          //   try {
-          //     await sendOrEditStatus("❌ All APIs and yt-dlp fallback failed.");
-          //   } catch (e) {}
-          //   await deleteStatus();
-          //   return;
-          // }
+            await deleteStatus();
+            return;
+          } catch (e4) {
+            console.error("❌ yt-dlp fallback failed:", e4?.message);
+            try {
+              await sendOrEditStatus("❌ All APIs and yt-dlp fallback failed.");
+            } catch (e) {}
+            await deleteStatus();
+            return;
+          }
         }
       }
     }
