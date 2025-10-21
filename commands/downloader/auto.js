@@ -450,35 +450,66 @@ module.exports = {
     };
 
     const igHandler3 = async (ctx, chatId, data) => {
-      const mediaItems = Array.isArray(data?.result?.response?.data)
-        ? data.result.response.data
+      const mediaItems = Array.isArray(data?.result?.data)
+        ? data.result.data
         : [];
+      const stats = data?.result?.statistics || {};
 
       if (!mediaItems.length) {
         throw new Error("IG API 3 returned empty media array.");
       }
 
       const images = mediaItems
-        .filter((i) => i.type === "image")
+        .filter((i) => i.type === "image" && i.url)
         .map((i) => i.url);
 
       const videos = mediaItems
-        .filter((i) => i.type === "video")
+        .filter((i) => i.type === "video" && i.url)
         .map((i) => i.url);
 
+      // 🔹 Format statistik (hanya yang ada nilainya)
+      const statLines = [
+        stats.like_count && stats.like_count !== "-"
+          ? `❤️ ${stats.like_count}`
+          : null,
+        stats.comment_count && stats.comment_count !== "-"
+          ? `💬 ${stats.comment_count}`
+          : null,
+        stats.play_count && stats.play_count !== "-"
+          ? `▶️ ${stats.play_count}`
+          : null,
+        stats.share_count && stats.share_count !== "-"
+          ? `🔁 ${stats.share_count}`
+          : null,
+        stats.save_count && stats.save_count !== "-"
+          ? `💾 ${stats.save_count}`
+          : null,
+      ].filter(Boolean);
+
+      const statCaption = statLines.length
+        ? statLines.join(" · ")
+        : "ℹ️ No statistics available.";
+
+      // --- Jika video tersedia ---
       if (videos.length) {
         await ctx.api.sendVideo(chatId, videos[0], {
           supports_streaming: true,
+          caption: statCaption,
         });
         return;
       }
 
+      // --- Jika foto tersedia ---
       if (images.length) {
         const groups = chunkArray(images, 10);
         for (const grp of groups) {
-          const mediaGroup = grp.map((u) => ({ type: "photo", media: u }));
+          const mediaGroup = grp.map((u) => ({
+            type: "photo",
+            media: u,
+            caption: statCaption, // caption hanya di foto pertama, opsional
+          }));
           await ctx.api.sendMediaGroup(chatId, mediaGroup);
-          await delay(1500); // delay hanya untuk foto
+          await delay(1500); // jeda agar tidak spam API Telegram
         }
         return;
       }
@@ -722,16 +753,19 @@ module.exports = {
 
           if (isInstagram) {
             const res3 = await axios.get(
-              `${process.env.vreden}/api/igdownload?url=${encodeURIComponent(
-                input
-              )}`,
-              { timeout: 10000 }
+              createUrl(
+                "vreden",
+                `/api/v1/download/instagram?url=${encodeURIComponent(input)}`
+              )
             );
+
             const data3 = res3.data;
-            if (!data3?.status || !data3?.result)
+            if (!data3?.status || !data3?.result) {
               throw new Error(
                 "API 3 (Vreden - Instagram) returned invalid response"
               );
+            }
+
             await igHandler3(ctx, chatId, data3);
             await deleteStatus();
             return;
