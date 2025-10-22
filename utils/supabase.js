@@ -321,7 +321,7 @@ async function updateFJL(pengeluaran, pemasukan, information) {
 
   // Insert transaction hanya untuk DOMPET
   const { error: trxError } = await supabase
-    .from("transaction")
+    .from("transactions")
     .insert([
       { amount: pemasukan, information, wallet: "DOMPET" }
     ]);
