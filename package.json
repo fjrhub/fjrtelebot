@@ -12,7 +12,8 @@
     "dotenv": "16.3.1",
     "grammy": "^1.38.2",
     "groq-sdk": "^0.32.0",
-    "module-alias": "^2.2.3"
+    "module-alias": "^2.2.3",
+    "mongodb": "^6.20.0"
   },
   "_moduleAliases": {
     "@": "./"
