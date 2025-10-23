@@ -1,4 +1,4 @@
-const { setAutoStatus } = require("@/utils/supabase");
+const { updateAutoStatus } = require("@/utils/mongodb");
 const { isAuthorized } = require("@/utils/helper");
 
 module.exports = {
@@ -38,7 +38,7 @@ module.exports = {
     if (!isAuthorized(chatId)) return;
 
     if (action === "auto_on") {
-      await setAutoStatus(chatId, true);
+      await updateAutoStatus(chatId, true);
       await ctx.api.answerCallbackQuery(query.id, { text: "✅ Enabled!" });
 
       await ctx.api.editMessageText(chatId, query.message.message_id, "✅ Auto Downloader is now *enabled*", {
@@ -52,7 +52,7 @@ module.exports = {
     }
 
     if (action === "auto_off") {
-      await setAutoStatus(chatId, false);
+      await updateAutoStatus(chatId, false);
       await ctx.api.answerCallbackQuery(query.id, { text: "🛑 Disabled!" });
 
       await ctx.api.editMessageText(chatId, query.message.message_id, "🛑 Auto Downloader is now *disabled*", {
