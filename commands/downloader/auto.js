@@ -537,17 +537,17 @@ module.exports = {
     }
 
     async function ytDlpFallback(ctx, url, sendOrEditStatus) {
-      // 🌐 Langsung ambil URL input tanpa resolveRedirect()
+      // 🌐 Directly fetch input URL without resolveRedirect()
       const resolvedUrl = url.trim();
 
-      // Deteksi platform
+      // Platform detection
       const isTikTok = resolvedUrl.includes("tiktok.com");
       const isInstagram = resolvedUrl.includes("instagram.com");
       const isFacebook = resolvedUrl.includes("facebook.com");
 
       console.log("🔍 [ytDlpFallback] URL dari input:", resolvedUrl);
 
-      // 📸 Skip semua jenis URL foto / non-video
+      // 📸 Skip all types of photo/non-video URLs
       if (
         /\.(jpg|jpeg|png|webp|gif)$/i.test(resolvedUrl) ||
         resolvedUrl.includes("/photo/") ||
@@ -561,12 +561,12 @@ module.exports = {
       ) {
         console.log("🧩 Reason: Detected invalid or non-video page");
         await sendOrEditStatus(
-          "⚠️ URL bukan video (foto atau halaman tidak valid) — skip yt-dlp fallback."
+          "⚠️ URL is not a video (invalid photo or page) — skip yt-dlp fallback."
         );
         return false;
       }
 
-      // 📁 Pastikan folder output ada
+      // 📁 Make sure the output folder exists
       const outputDir = path.resolve(__dirname, "../../yt-dlp");
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
@@ -576,7 +576,7 @@ module.exports = {
       const basePath = path.join(outputDir, `video_${timestamp}`);
       const outputFile = `${basePath}.mp4`;
 
-      // 🎥 Tentukan command sesuai platform
+      // 🎥 Determine the command according to the platform
       let cmd;
       if (isFacebook) {
         cmd = `yt-dlp -o "${basePath}.%(ext)s" "${resolvedUrl}"`;
@@ -655,14 +655,14 @@ module.exports = {
           "siputzx",
           `/api/d/tiktok/v2?url=${encodeURIComponent(input)}`
         ),
-        8000 // timeout hanya untuk API
+        8000 // timeout only for API
       );
 
       const data = res.data;
       if (!data?.status || !data?.data)
         throw new Error("API (Siputzx - TikTok) returned invalid response");
 
-      // Proses kirim boleh lama, tidak terpengaruh timeout
+      // The sending process may take a long time, it is not affected by timeouts
       await tthandler1(ctx, chatId, data);
       await deleteStatus();
       return;
@@ -746,7 +746,7 @@ module.exports = {
             const result3 = res3.data;
             if (!result3?.status || !result3.result)
               throw new Error(
-                "API 3 (Vreden - Facebook) mengembalikan respons tidak valid."
+                "API 3 (Vreden - Facebook) returned invalid response."
               );
 
             await fbHandler3(ctx, chatId, result3);
@@ -801,7 +801,7 @@ module.exports = {
 
             if (success === false) {
               await deleteStatus();
-              return; // Jangan lempar error kalau memang skip foto
+              return; // Don't throw an error if you skip a photo
             }
 
             await deleteStatus();
