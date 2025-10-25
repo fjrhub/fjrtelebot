@@ -1,5 +1,4 @@
-const { isAutoEnabled } = require("@/utils/supabase");
-const { isAuthorized } = require("@/utils/helper");
+const { isAutoEnabled } = require("@/utils/mongodb");
 const axios = require("axios");
 const { exec } = require("child_process");
 const path = require("path");
@@ -11,9 +10,6 @@ module.exports = {
   name: "auto",
   async execute(ctx) {
     const chatId = ctx.chat?.id;
-    if (!chatId) return;
-    if (!isAuthorized(chatId)) return;
-
     const text = ctx.message?.text?.trim();
     if (!text) return;
 
