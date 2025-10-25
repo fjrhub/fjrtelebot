@@ -39,14 +39,6 @@ async function insertAutoStatus(data) {
   return result;
 }
 
-// 🔹 Update status berdasarkan id
-// async function updateAutoStatus(id, status) {
-//   const collection = await connectCollection("auto_status");
-//   const result = await collection.updateOne({ id }, { $set: { status } });
-//   console.log("✏️ Auto status updated:", result.modifiedCount);
-//   return result;
-// }
-
 // 🔹 Ambil semua data auto_status
 async function getAllAutoStatus() {
   const collection = await connectCollection("auto_status");
@@ -64,18 +56,6 @@ async function deleteAutoStatus(id) {
   const collection = await connectCollection("auto_status");
   const result = await collection.deleteOne({ id });
   console.log("🗑️ Auto status deleted:", result.deletedCount);
-  return result;
-}
-
-/* =========================================================
-   TEMPLATE UNTUK KOLEKSI LAIN (misal users, logs, dll)
-   ========================================================= */
-
-// contoh tambahan (kamu bisa tambahkan nanti)
-async function insertUser(user) {
-  const collection = await connectCollection("users");
-  const result = await collection.insertOne(user);
-  console.log("👤 User inserted:", result.insertedId);
   return result;
 }
 
@@ -145,5 +125,4 @@ module.exports = {
   getAutoStatusById,
   deleteAutoStatus,
   isAutoEnabled,
-  insertUser, // contoh tambahan
 };
