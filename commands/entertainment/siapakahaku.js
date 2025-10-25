@@ -3,7 +3,7 @@ const { isAuthorized } = require("@/utils/helper");
 const { setGame, getGame, clearGame } = require("@/utils/games");
 
 module.exports = {
-  name: "whoami",
+  name: "siapakahaku",
   description: "Who Am I guessing game",
   async execute(ctx) {
     const chatId = ctx.chat.id;
@@ -11,7 +11,7 @@ module.exports = {
     if (!isAuthorized(chatId)) return;
 
     // 🔑 handle surrender
-    if (text === "/whoami surrender") {
+    if (text === "/siapakahaku surrender") {
       const currentGame = getGame(chatId, "whoami");
       if (!currentGame) {
         return ctx.reply(
