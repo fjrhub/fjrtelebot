@@ -15,8 +15,17 @@ function loadCommands(dir) {
       loadCommands(fullPath);
     } else if (file.endsWith(".js")) {
       const command = require(fullPath);
+
       if (command.name && typeof command.execute === "function") {
+        // Simpan command utama
         commands.set(command.name, command);
+
+        // ✅ Tambahkan alias jika ada
+        if (Array.isArray(command.aliases)) {
+          for (const alias of command.aliases) {
+            commands.set(alias, command);
+          }
+        }
       }
     }
   }
@@ -29,7 +38,7 @@ async function handleMessage(ctx) {
   if (!ctx.message?.text) return;
   const text = ctx.message.text;
 
-  // If the command
+  // Jika command
   if (text.startsWith("/")) {
     return handleCommand(ctx);
   }
@@ -48,6 +57,7 @@ async function handleMessage(ctx) {
   await checkAnswer(ctx);
 }
 
+// 🔨 Handle command
 function handleCommand(ctx) {
   const text = ctx.message.text;
   if (!text.startsWith("/")) return;
@@ -55,6 +65,7 @@ function handleCommand(ctx) {
   const args = text.slice(1).trim().split(/ +/);
   let commandName = args.shift().toLowerCase();
 
+  // Jika user menulis seperti /delete@BotName
   const atIndex = commandName.indexOf("@");
   if (atIndex !== -1) {
     commandName = commandName.slice(0, atIndex);
@@ -91,7 +102,6 @@ async function handleCallback(ctx) {
   }
 
   try {
-    // Make sure query.message exists before forwarding
     if (!query.message) {
       return ctx.answerCallbackQuery({ text: "⚠️ Cannot handle inline message." });
     }
