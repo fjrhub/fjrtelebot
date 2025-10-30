@@ -5,8 +5,6 @@ const uri = process.env.MONGO_URI;
 const dbName = "fjrtelebot";
 const client = new MongoClient(uri);
 
-let isConnected = false;
-
 // ✅ Helper koneksi stabil
 async function connectCollection(collectionName) {
   console.log(
