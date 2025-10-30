@@ -1,4 +1,3 @@
-// commands/savings/dev.js
 const { MongoClient } = require("mongodb");
 
 const uri = process.env.MONGO_URI;
@@ -24,7 +23,10 @@ module.exports = {
     }
 
     const [amountRaw, description, account, type, category = "general", payment = "cash", ...noteParts] = parts;
-    const note = noteParts.join(" ") || "";
+    let note = noteParts.join(" ") || "";
+
+    // 🔧 Hapus tanda kutip tunggal atau ganda di awal & akhir catatan
+    note = note.replace(/^['"]|['"]$/g, "");
 
     const amount = parseFloat(amountRaw);
     if (isNaN(amount)) {
@@ -51,7 +53,7 @@ module.exports = {
         account,
         created: new Date(),
         updated: new Date(),
-        type,          // contoh: "income" atau "expense"
+        type,
         category,
         balance: newBalance,
         payment,
