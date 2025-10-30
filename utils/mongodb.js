@@ -49,7 +49,6 @@ async function insertAutoStatus(data) {
   return { success: true, insertedId: result.insertedId };
 }
 
-
 // 🔹 Ambil semua data auto_status
 async function getAllAutoStatus() {
   const collection = await connectCollection("auto_status");
@@ -62,12 +61,22 @@ async function getAutoStatusById(id) {
   return await collection.findOne({ id });
 }
 
-// 🔹 Hapus data auto_status
+// 🔹 Hapus data dari koleksi auto_status
 async function deleteAutoStatus(id) {
   const collection = await connectCollection("auto_status");
+
+  // Cek apakah data dengan ID ini ada
+  const existing = await collection.findOne({ id });
+  if (!existing) {
+    console.log("⚠️ Data tidak ditemukan:", id);
+    return { success: false, message: "Data tidak ditemukan" };
+  }
+
+  // Hapus data
   const result = await collection.deleteOne({ id });
-  console.log("🗑️ Auto status deleted:", result.deletedCount);
-  return result;
+  console.log("🗑️ Auto status removed:", id);
+
+  return { success: true, deletedCount: result.deletedCount };
 }
 
 // 🧠 Cache lokal di memory
