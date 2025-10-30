@@ -13,7 +13,12 @@ module.exports = {
     }
 
     try {
-      await insertAutoStatus({ id: chatId, status: true });
+      const result = await insertAutoStatus({ id: chatId, status: true });
+
+      if (!result.success) {
+        return ctx.reply("⚠️ ID ini sudah ada di whitelist.");
+      }
+
       return ctx.reply("✅ Berhasil ditambahkan ke whitelist!");
     } catch (error) {
       console.error("❌ Gagal menambahkan:", error);
