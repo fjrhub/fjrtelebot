@@ -34,8 +34,6 @@ async function connectCollection(collectionName) {
 // 🔹 Insert data baru dengan validasi duplikat
 async function insertAutoStatus(data) {
   const collection = await connectCollection("auto_status");
-
-  // Cek apakah ID sudah ada di database
   const existing = await collection.findOne({ id: data.id });
 
   if (existing) {
@@ -43,9 +41,15 @@ async function insertAutoStatus(data) {
     return { success: false, message: "Data sudah ada" };
   }
 
-  // Kalau belum ada, insert data baru
   const result = await collection.insertOne(data);
   console.log("✅ Auto status inserted:", result.insertedId);
+
+  // 🧹 Bersihkan cache lama jika ada
+  if (autoCache.has(data.id)) {
+    autoCache.delete(data.id);
+    console.log(`🧹 [insertAutoStatus] Cache untuk chatId ${data.id} dihapus`);
+  }
+
   return { success: true, insertedId: result.insertedId };
 }
 
@@ -65,16 +69,20 @@ async function getAutoStatusById(id) {
 async function deleteAutoStatus(id) {
   const collection = await connectCollection("auto_status");
 
-  // Cek apakah data dengan ID ini ada
   const existing = await collection.findOne({ id });
   if (!existing) {
     console.log("⚠️ Data tidak ditemukan:", id);
     return { success: false, message: "Data tidak ditemukan" };
   }
 
-  // Hapus data
   const result = await collection.deleteOne({ id });
   console.log("🗑️ Auto status removed:", id);
+
+  // 🧹 Hapus cache agar tidak ambil status lama
+  if (autoCache.has(id)) {
+    autoCache.delete(id);
+    console.log(`🗑️ [deleteAutoStatus] Cache untuk chatId ${id} dihapus`);
+  }
 
   return { success: true, deletedCount: result.deletedCount };
 }
