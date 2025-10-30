@@ -4,6 +4,7 @@ const { setGame, getGame, clearGame } = require("@/utils/games");
 
 module.exports = {
   name: "asahotak",
+  aliases: ["ah"],
   description: "Brain teaser quiz game",
 
   async execute(ctx, args) {
