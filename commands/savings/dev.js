@@ -11,27 +11,30 @@ module.exports = {
     const text = ctx.message?.text?.split(" ").slice(1).join(" ");
     if (!text) {
       return ctx.reply(
-        "⚠️ Format salah!\nGunakan:\n/dev <amount> <description> <account> <type> [category] [payment] [note]"
+        "⚠️ Format salah!\nGunakan:\n/dev <amount> <description> <account> [category] [payment] [note]\n\nContoh:\n/dev -10000 kopi dompet food cash 'ngopi pagi'"
       );
     }
 
     const parts = text.split(" ");
-    if (parts.length < 4) {
+    if (parts.length < 3) {
       return ctx.reply(
-        "❗ Format kurang lengkap!\nContoh:\n/dev 50000 makan harian expense food cash 'beli makan siang'"
+        "❗ Format kurang lengkap!\nContoh:\n/dev -10000 kopi dompet food cash 'ngopi pagi'"
       );
     }
 
-    const [amountRaw, description, account, type, category = "general", payment = "cash", ...noteParts] = parts;
+    const [amountRaw, description, account, category = "general", payment = "cash", ...noteParts] = parts;
     let note = noteParts.join(" ") || "";
 
-    // 🔧 Hapus tanda kutip tunggal atau ganda di awal & akhir catatan
+    // 🔧 Hapus tanda kutip di awal/akhir note
     note = note.replace(/^['"]|['"]$/g, "");
 
     const amount = parseFloat(amountRaw);
     if (isNaN(amount)) {
       return ctx.reply("❌ Amount harus berupa angka!");
     }
+
+    // 💡 Tentukan type otomatis
+    const type = amount < 0 ? "expense" : "income";
 
     const client = new MongoClient(uri);
 
@@ -44,7 +47,7 @@ module.exports = {
       const lastTransaction = await collection.find().sort({ created: -1 }).limit(1).toArray();
       const lastBalance = lastTransaction.length > 0 ? lastTransaction[0].balance : 0;
 
-      // Hitung balance baru
+      // Hitung saldo baru
       const newBalance = lastBalance + amount;
 
       const transaction = {
