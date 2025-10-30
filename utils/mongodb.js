@@ -31,13 +31,24 @@ async function connectCollection(collectionName) {
    AUTO STATUS COLLECTION (default collection kamu sekarang)
    ========================================================= */
 
-// 🔹 Insert data baru
+// 🔹 Insert data baru dengan validasi duplikat
 async function insertAutoStatus(data) {
   const collection = await connectCollection("auto_status");
+
+  // Cek apakah ID sudah ada di database
+  const existing = await collection.findOne({ id: data.id });
+
+  if (existing) {
+    console.log("⚠️ Data sudah ada:", existing.id);
+    return { success: false, message: "Data sudah ada" };
+  }
+
+  // Kalau belum ada, insert data baru
   const result = await collection.insertOne(data);
   console.log("✅ Auto status inserted:", result.insertedId);
-  return result;
+  return { success: true, insertedId: result.insertedId };
 }
+
 
 // 🔹 Ambil semua data auto_status
 async function getAllAutoStatus() {
