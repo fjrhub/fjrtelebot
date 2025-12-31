@@ -1,9 +1,9 @@
-const { setAutoStatus } = require("@/utils/supabase");
+const { updateAutoStatus } = require("@/utils/mongodb");
 const { isAuthorized } = require("@/utils/helper");
 
 module.exports = {
-  name: "settings",
-
+  name: "setauto",
+  description: "settings auto status on/off",
   async execute(ctx) {
     const chatId = ctx.chat.id;
     if (!isAuthorized(chatId)) return;
@@ -13,8 +13,8 @@ module.exports = {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "✅ Enable", callback_data: `settings:auto_on:${ctx.message.message_id}` },
-            { text: "🛑 Disable", callback_data: `settings:auto_off:${ctx.message.message_id}` },
+            { text: "✅ Enable", callback_data: `setauto:auto_on:${ctx.message.message_id}` },
+            { text: "🛑 Disable", callback_data: `setauto:auto_off:${ctx.message.message_id}` },
           ],
         ],
       },
@@ -38,7 +38,7 @@ module.exports = {
     if (!isAuthorized(chatId)) return;
 
     if (action === "auto_on") {
-      await setAutoStatus(chatId, true);
+      await updateAutoStatus(chatId, true);
       await ctx.api.answerCallbackQuery(query.id, { text: "✅ Enabled!" });
 
       await ctx.api.editMessageText(chatId, query.message.message_id, "✅ Auto Downloader is now *enabled*", {
@@ -52,7 +52,7 @@ module.exports = {
     }
 
     if (action === "auto_off") {
-      await setAutoStatus(chatId, false);
+      await updateAutoStatus(chatId, false);
       await ctx.api.answerCallbackQuery(query.id, { text: "🛑 Disabled!" });
 
       await ctx.api.editMessageText(chatId, query.message.message_id, "🛑 Auto Downloader is now *disabled*", {
