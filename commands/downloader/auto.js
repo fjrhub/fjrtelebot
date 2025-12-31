@@ -87,7 +87,7 @@ module.exports = {
     };
 
     async function getWithTimeout(url, timeoutMs = 8000) {
-      const start = Date.now(); // ⏱️ 
+      const start = Date.now(); // ⏱️ start counting time
 
       try {
         const controller = new AbortController();
