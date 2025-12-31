@@ -4,6 +4,7 @@ const { setGame, getGame, clearGame } = require("@/utils/games");
 
 module.exports = {
   name: "susunkata",
+  aliases: ["sk"],
   description: "Word scramble game",
   async execute(ctx, args) {
     const chatId = ctx.chat.id;

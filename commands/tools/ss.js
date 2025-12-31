@@ -4,7 +4,8 @@ const { InputFile } = require("grammy");
 
 module.exports = {
   name: "ss",
-  description: "Take website screenshot using Vreden API (with fallback to DIIOFFC)",
+  description:
+    "Take website screenshot using Vreden API (with fallback to DIIOFFC)",
   async execute(ctx) {
     const chatId = ctx.chat.id;
 
@@ -46,8 +47,14 @@ module.exports = {
     };
 
     const screenshotVreden = async (url) => {
-      const apiUrl = `${process.env.vreden}/api/v1/tools/screenshot?url=${encodeURIComponent(url)}&type=phone`;
-      const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
+      const apiUrl = createUrl(
+        "vreden",
+        `/api/v1/tools/screenshot?url=${encodeURIComponent(url)}&type=phone`
+      );
+      const res = await axios.get(apiUrl, {
+        responseType: "arraybuffer",
+        timeout: 10000,
+      });
       if (!res.data) throw new Error("API1 returned empty data.");
       return res.data;
     };
@@ -56,8 +63,13 @@ module.exports = {
       if (!/^https?:\/\//i.test(url)) {
         url = `https://${url}`;
       }
-      const apiUrl = `${process.env.diioffc}/api/tools/sspc?url=${encodeURIComponent(url)}`;
-      const res = await axios.get(apiUrl, { responseType: "arraybuffer", timeout: 10000 });
+      const apiUrl = `${
+        process.env.diioffc
+      }/api/tools/sspc?url=${encodeURIComponent(url)}`;
+      const res = await axios.get(apiUrl, {
+        responseType: "arraybuffer",
+        timeout: 10000,
+      });
       if (!res.data) throw new Error("API2 returned empty data.");
       return res.data;
     };
