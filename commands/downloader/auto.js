@@ -110,7 +110,7 @@ module.exports = {
       }
     }
 
-    // Fungsi delay sederhana
+    // Simple delay function
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     // Fungsi bantu untuk mempersingkat angka
